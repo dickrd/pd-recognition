@@ -231,7 +231,7 @@ def _new_biases(length):
 def use_model():
     import argparse
     import os
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
     # Parse commandline arguments.
     parser = argparse.ArgumentParser(description="cnn model util.")

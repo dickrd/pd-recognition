@@ -101,7 +101,7 @@ def load_image_data(image_file_path,
     from PIL import Image
 
     # Pre-process image.
-    image = Image.open(image_file_path)
+    image = Image.open(image_file_path).convert(mode="RGB")
 
     # Resize image.
     image = image.resize(resize, Image.LANCZOS)
