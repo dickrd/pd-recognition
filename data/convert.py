@@ -179,8 +179,7 @@ def main():
         print "Chance for example to file " + result_files[index + 1] + ": " + str(item)
 
     # Compile regex for name generation.
-    regex = r"(F|M)(\d\d\d\d)"
-    pattern = re.compile(regex)
+    pattern = re.compile(r".*([FM])(\d\d\d\d).*")
 
     # Name to label conversion.
     name_labels = {}

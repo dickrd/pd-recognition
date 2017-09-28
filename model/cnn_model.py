@@ -380,7 +380,7 @@ def predict(model_path, name_dict, feed_image, feed_image_size, feed_image_chann
     print "Loading image from {0} with size: {1}x{1}.".format(feed_image, feed_image_size)
     image = load_image_data(image_file_path=feed_image,
                             resize=(feed_image_size, feed_image_size))
-    name = generate_name(feed_image, re.compile(r"([FM])(\d\d\d\d)"))
+    name = generate_name(feed_image, re.compile(r".*([FM])(\d\d\d\d).*"))
     if name:
         print "True class is: " + name
     with tf.Graph().as_default():
