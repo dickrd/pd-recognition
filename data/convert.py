@@ -112,7 +112,7 @@ def load_image_data(image_file_path,
 def generate_name(image_file_path, pattern):
     matches = pattern.match(image_file_path)
     if matches:
-        return matches.group(0)
+        return matches.group(1)
     else:
         return None
 
