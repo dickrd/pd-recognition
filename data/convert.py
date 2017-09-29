@@ -93,7 +93,7 @@ class TfReader(object):
 def load_image_data(image_file_path,
                     resize=(512, 512)):
     """
-    Load car json file.
+    Load image data in RGB format.
     :param image_file_path: Path to a image file.
     :param resize: Resize the car image to the size.
     :return: PIL.Image object of the car's image and the label(car brand).
@@ -128,10 +128,6 @@ def _bytes_feature(value):
 def main():
     """
     Tool to convert saved json data to tfrecords.
-    When calling from cli, a directory to json files are required.
-    It is assumed that all files in the directory and its subdirectories are json file 
-    that has field "image" which is base64 encoded image bytes and "brand" which is '#' 
-    separated brand category like "car#tesla#tesla model 3#tesla model 3 2018".
     
     The random chance is for example [0.2, 0.3] indicating that there is a 20% chance a
     specific image will be written to the second tfrecord file and if it fails, there will be a 
