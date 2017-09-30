@@ -34,7 +34,7 @@ def main():
     args = parser.parse_args()
 
     if not args.input_path:
-        print "Must specify image paths(--image-path)."
+        print "Must specify image paths(--image-path)!"
         return
 
     print "Image will be resized to: " + str(args.resize) + "x" + str(args.resize)

@@ -236,7 +236,7 @@ def use_model():
     # Parse commandline arguments.
     parser = argparse.ArgumentParser(description="cnn model util.")
     parser.add_argument("action",
-                        help="action to perform, including: train, predict")
+                        help="action to perform, including: train, test, predict")
     parser.add_argument("-i", "--image",
                         help="path to unclassified image")
     parser.add_argument("-d", "--data",
@@ -313,6 +313,8 @@ def use_model():
             label_names = json.load(label_file)
             predict(model_path=args.model_path, name_dict=label_names, build=build,
                     feed_image=args.image, feed_image_size=args.resize)
+    else:
+        print "Unsupported action: " + args.action
 
 
 def train(model_path, train_data_path, class_count, image_size, image_channel=3, build=build_cnn,

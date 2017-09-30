@@ -105,13 +105,13 @@ def main():
     args = parser.parse_args()
 
     if not args.input_path:
-        print "Must specify image paths(--image-path)."
+        print "Must specify image paths(--image-path)!"
         return
 
     class_filter = None
     if args.desired_class:
         if not args.car_class:
-            print "Json car class file(--car-class) is required."
+            print "Must specify json car class file(--car-class)!"
             return
 
         with open(args.car_class, 'r') as car_class_file:
