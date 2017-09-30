@@ -1,4 +1,4 @@
-from data.convert import TfWriter, AutoList
+from data.common import TfWriter, AutoList
 
 
 def load_car_json_data(car_json_path, dry_run=False, class_filter=None,
@@ -82,7 +82,7 @@ def main():
 
     # Parse commandline arguments.
     parser = argparse.ArgumentParser(description="convert image to tfrecords file.")
-    parser.add_argument("input",
+    parser.add_argument("-i", "--input-path", nargs='+',
                         help="path to image files")
     parser.add_argument("-d", "--dry-run", action="store_true",
                         help="generate json statistics only")
@@ -104,6 +104,10 @@ def main():
                         help="percentage of file after the crop, starting from center")
     args = parser.parse_args()
 
+    if not args.input_path:
+        print "Must specify image paths(--image-path)."
+        return
+
     class_filter = None
     if args.desired_class:
         if not args.car_class:
@@ -122,25 +126,26 @@ def main():
     if args.dry_run:
         print "This run will only summarize data statistics."
         name_count = {}
-        # Walk through given path, to find car images.
-        for path, subdirs, files in os.walk(args.input):
-            print "In: " + path
-            for a_file in files:
-                # Try to read car image.
-                # noinspection PyBroadException
-                try:
-                    img, name = load_car_json_data(os.path.join(path, a_file), class_filter=class_filter,
-                                                   dry_run=True)
-                    if not name:
-                        continue
+        for directory in args.input_path:
+            # Walk through given path, to find car images.
+            for path, subdirs, files in os.walk(directory):
+                print "In: " + path
+                for a_file in files:
+                    # Try to read car image.
+                    # noinspection PyBroadException
+                    try:
+                        img, name = load_car_json_data(os.path.join(path, a_file), class_filter=class_filter,
+                                                       dry_run=True)
+                        if not name:
+                            continue
 
-                    # Get statistics.
-                    if name not in name_count:
-                        name_count[name] = 1
-                    else:
-                        name_count[name] += 1
-                except Exception as e:
-                    print "Error reading " + a_file + ": " + repr(e)
+                        # Get statistics.
+                        if name not in name_count:
+                            name_count[name] = 1
+                        else:
+                            name_count[name] += 1
+                    except Exception as e:
+                        print "Error reading " + a_file + ": " + repr(e)
         print "All images processed."
 
         # Write results.
@@ -190,56 +195,58 @@ def main():
         print "Chance for example to file " + result_files[index + 1] + ": " + str(item)
 
     name_labels = {}
-    # Walk through given path, to find car images.
-    for path, subdirs, files in os.walk(args.input):
-        print "In: " + path
-        for a_file in files:
-            # Try to read car image.
-            # noinspection PyBroadException
-            try:
-                img, name = load_car_json_data(os.path.join(path, a_file), class_filter=class_filter,
-                                               resize=(args.resize, args.resize),
-                                               crop_percentage=args.crop)
-                if not name:
-                    continue
 
-                # Skip unsatisfied files.
-                if name_count and name_count[name] < args.limit[0]:
-                    continue
+    for directory in args.input_path:
+        # Walk through given path, to find car images.
+        for path, subdirs, files in os.walk(directory):
+            print "In: " + path
+            for a_file in files:
+                # Try to read car image.
+                # noinspection PyBroadException
+                try:
+                    img, name = load_car_json_data(os.path.join(path, a_file), class_filter=class_filter,
+                                                   resize=(args.resize, args.resize),
+                                                   crop_percentage=args.crop)
+                    if not name:
+                        continue
 
-                # Convert car brand name to int. Save the conversion for converting back.
-                if name not in name_labels:
-                    label = len(name_labels)
-                    name_labels[name] = label
-                else:
-                    label = name_labels[name]
+                    # Skip unsatisfied files.
+                    if name_count and name_count[name] < args.limit[0]:
+                        continue
 
-                # Skip extra images.
-                if args.limit and name_wrote_count[label] > args.limit[1]:
-                    continue
+                    # Convert car brand name to int. Save the conversion for converting back.
+                    if name not in name_labels:
+                        label = len(name_labels)
+                        name_labels[name] = label
+                    else:
+                        label = name_labels[name]
 
-                # If this car image has been write to a tfrecord file.
-                write = False
+                    # Skip extra images.
+                    if args.limit and name_wrote_count[label] > args.limit[1]:
+                        continue
 
-                # Determine which tfrecord file to write this image to.
-                for index, item in enumerate(args.random_chance):
-                    if random.random() < item:
-                        writers[index + 1].write(img, label)
-                        count[index + 1] += 1
-                        write = True
-                        break
-                # Default write to this file.
-                if not write:
-                    writers[0].write(img, label)
-                    count[0] += 1
+                    # If this car image has been write to a tfrecord file.
+                    write = False
 
-                name_wrote_count[label] += 1
-            except Exception as e:
-                print "Error reading " + a_file + ": " + repr(e)
+                    # Determine which tfrecord file to write this image to.
+                    for index, item in enumerate(args.random_chance):
+                        if random.random() < item:
+                            writers[index + 1].write(img, label)
+                            count[index + 1] += 1
+                            write = True
+                            break
+                    # Default write to this file.
+                    if not write:
+                        writers[0].write(img, label)
+                        count[0] += 1
 
-        # Count example for every directory read.
-        for index, file_name in enumerate(result_files):
-            print "Current examples in " + file_name + ": " + str(count[index])
+                    name_wrote_count[label] += 1
+                except Exception as e:
+                    print "Error reading " + a_file + ": " + repr(e)
+
+            # Count example for every directory read.
+            for index, file_name in enumerate(result_files):
+                print "Current examples in " + file_name + ": " + str(count[index])
 
     print "All images processed."
 

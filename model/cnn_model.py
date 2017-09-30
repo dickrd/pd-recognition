@@ -317,7 +317,7 @@ def use_model():
 
 def train(model_path, train_data_path, class_count, image_size, image_channel=3, build=build_cnn,
           num_epoch=50, batch_size=100, capacity=3000, min_after_dequeue=800):
-    from data.convert import TfReader
+    from data.common import TfReader
     with tf.Graph().as_default():
         # Read training data.
         train_data = TfReader(data_path=train_data_path,
@@ -333,7 +333,7 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
 
 def test(model_path, test_data_path, class_count, image_size, image_channel=3, report_rate=10, build=build_cnn,
          batch_size=100, capacity=3000, min_after_dequeue=800):
-    from data.convert import TfReader
+    from data.common import TfReader
     import os
     with tf.Graph().as_default():
         # Read test data.
@@ -375,14 +375,9 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
 
 def predict(model_path, name_dict, feed_image, feed_image_size, feed_image_channel=3, build=build_cnn):
     from data.convert import load_image_data
-    from data.convert import generate_name_by_path
-    import re
     print "Loading image from {0} with size: {1}x{1}.".format(feed_image, feed_image_size)
     image = load_image_data(image_file_path=feed_image,
                             resize=(feed_image_size, feed_image_size))
-    name = generate_name_by_path(feed_image, re.compile(r".*([FM])(\d\d\d\d).*"))
-    if name:
-        print "True class is: " + name
     with tf.Graph().as_default():
         # Input placeholder.
         x = tf.placeholder(tf.float32, shape=[feed_image_size, feed_image_size, 3], name='image_flat')
