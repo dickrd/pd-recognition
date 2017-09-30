@@ -375,12 +375,12 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
 
 def predict(model_path, name_dict, feed_image, feed_image_size, feed_image_channel=3, build=build_cnn):
     from data.convert import load_image_data
-    from data.convert import generate_name
+    from data.convert import generate_name_by_path
     import re
     print "Loading image from {0} with size: {1}x{1}.".format(feed_image, feed_image_size)
     image = load_image_data(image_file_path=feed_image,
                             resize=(feed_image_size, feed_image_size))
-    name = generate_name(feed_image, re.compile(r".*([FM])(\d\d\d\d).*"))
+    name = generate_name_by_path(feed_image, re.compile(r".*([FM])(\d\d\d\d).*"))
     if name:
         print "True class is: " + name
     with tf.Graph().as_default():

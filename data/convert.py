@@ -109,7 +109,7 @@ def load_image_data(image_file_path,
     return image
 
 
-def generate_name(image_file_path, pattern):
+def generate_name_by_path(image_file_path, pattern):
     matches = pattern.match(image_file_path)
     if matches:
         return matches.group(1)
@@ -191,7 +191,7 @@ def main():
 
                     img = load_image_data(current_file_path,
                                           resize=(args.resize, args.resize))
-                    name = generate_name(current_file_path, pattern)
+                    name = generate_name_by_path(current_file_path, pattern)
                     if not name:
                         continue
 
