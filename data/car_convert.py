@@ -92,7 +92,7 @@ def main():
                         help="path to json car class file")
     parser.add_argument("-C", "--desired-class", nargs='+',
                         help="name of desired car class(requires --car-class)")
-    parser.add_argument("-l", "--limit", type=int, nargs=2,
+    parser.add_argument("-l", "--limit", type=int,
                         help="limit data set size of every label to(requires --name-count)")
     parser.add_argument("-o", "--output-path", default="./",
                         help="path to store result tfrecords")
@@ -173,7 +173,7 @@ def main():
             return
         with open(args.name_count, 'r') as name_count_file:
             name_count = json.load(name_count_file)
-        print "Image count limit: {0}~{1}".format(args.limit[0], args.limit[1])
+        print "Image count limit: {0}".format(args.limit)
     else:
         name_count = None
 
@@ -211,7 +211,7 @@ def main():
                         continue
 
                     # Skip unsatisfied files.
-                    if name_count and name_count[name] < args.limit[0]:
+                    if name_count and name_count[name] < args.limit:
                         continue
 
                     # Convert car brand name to int. Save the conversion for converting back.
@@ -222,7 +222,7 @@ def main():
                         label = name_labels[name]
 
                     # Skip extra images.
-                    if args.limit and name_wrote_count[label] > args.limit[1]:
+                    if args.limit and name_wrote_count[label] > args.limit:
                         continue
 
                     # If this car image has been write to a tfrecord file.
