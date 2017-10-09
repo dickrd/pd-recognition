@@ -16,8 +16,6 @@ def _get_inception_layer(inputs, conv11_size, conv33_11_size, conv33_size,
     with tf.variable_scope("pool_proj"):
         pool_proj = layers.max_pool2d(inputs, [3, 3], stride=1)
         pool11 = layers.conv2d(pool_proj, pool11_size, [1, 1])
-    if tf.__version__ == '0.11.0rc0':
-        return tf.concat(3, [conv11, conv33, conv55, pool11])
     return tf.concat([conv11, conv33, conv55, pool11], 3)
 
 
