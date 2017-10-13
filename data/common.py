@@ -40,7 +40,7 @@ class TfWriter(object):
 class TfReader(object):
     def __init__(self, data_path, size=(512, 512), num_epochs=1):
         self.reader = tf.TFRecordReader()
-        self.filename_queue = tf.train.string_input_producer([data_path], num_epochs=num_epochs)
+        self.filename_queue = tf.train.string_input_producer(data_path, num_epochs=num_epochs)
         self.size = size
 
         self.data_path = data_path

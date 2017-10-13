@@ -50,7 +50,7 @@ def use_model():
                         help="action to perform, including: train, test, predict")
     parser.add_argument("-i", "--image",
                         help="path to unclassified image")
-    parser.add_argument("-d", "--data",
+    parser.add_argument("-d", "--data", type=[],
                         help="path to formatted tfrecords data")
     parser.add_argument("-l", "--class-label",
                         help="path to json file that contains a map of readable name to class label.")
