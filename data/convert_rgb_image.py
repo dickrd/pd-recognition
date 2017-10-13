@@ -1,11 +1,11 @@
 import os
 
-from data.common import load_image_data, generate_name, AutoList, TfWriter
+from data.common import load_image_data, generate_name, AutoList, TfWriter, generate_age_span
 
 
 def main():
     """
-    Tool to convert gender images to tfrecords.
+    Tool to convert rgb images to tfrecords.
     
     The random chance is for example [0.2, 0.3] indicating that there is a 20% chance a
     specific image will be written to the second tfrecord file and if it fails, there will be a 
@@ -25,6 +25,8 @@ def main():
                         help="path to image files")
     parser.add_argument("-l", "--limit", type=int,
                         help="limit data set size of every label to a fixed number")
+    parser.add_argument("-t", "--label-type", default="general",
+                        help="which type of model to use(general, sex, age)")
     parser.add_argument("-o", "--output-path", default="./",
                         help="path to store result tfrecords")
     parser.add_argument("-r", "--random-chance", default=[], type=float, nargs='*',
@@ -56,9 +58,6 @@ def main():
         count.append(0)
         print "Chance for example to file " + result_files[index + 1] + ": " + str(item)
 
-    # Compile regex for name generation.
-    pattern = re.compile(r".*([FM])(\d\d\d\d).*")
-
     # Name to label conversion.
     name_labels = {}
     for directory in args.input_path:
@@ -73,7 +72,13 @@ def main():
 
                     img = load_image_data(current_file_path,
                                           resize=(args.resize, args.resize))
-                    name = generate_name(current_file_path, pattern)
+                    if args.label_type == "age":
+                        name = generate_age_span(current_file_path, re.compile(r".*[FM](\d\d\d\d).*"))
+                    elif args.label_type == "sex":
+                        name = generate_name(current_file_path, re.compile(r".*([FM])\d\d\d\d.*"))
+                    else:
+                        name = generate_name(current_file_path, re.compile(r".*/(.*)/"))
+
                     if not name:
                         continue
 

@@ -65,10 +65,10 @@ def use_model():
     args = parser.parse_args()
 
     if args.model_type == "google":
-        from model.googlenet import build_googlenet
+        from model.cnn_googlenet import build_googlenet
         build = build_googlenet
     elif args.model_type == "car":
-        from model.car_optimized import build_car_cnn
+        from model.cnn_car import build_car_cnn
         build = build_car_cnn
     else:
         build = build_cnn
