@@ -5,7 +5,7 @@ from data.common import load_image_data, generate_name, AutoList, TfWriter
 
 def main():
     """
-    Tool to convert saved json data to tfrecords.
+    Tool to convert gender images to tfrecords.
     
     The random chance is for example [0.2, 0.3] indicating that there is a 20% chance a
     specific image will be written to the second tfrecord file and if it fails, there will be a 
