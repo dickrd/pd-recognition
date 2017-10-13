@@ -132,7 +132,7 @@ def use_model():
 
 
 def train(model_path, train_data_path, class_count, image_size, image_channel=3, build=build_cnn,
-          num_epoch=50, batch_size=100, capacity=3000, min_after_dequeue=800):
+          num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800):
     from data.common import TfReader
     with tf.Graph().as_default():
         # Read training data.
