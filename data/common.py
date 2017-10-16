@@ -123,15 +123,9 @@ def generate_name(image_file_path, pattern, index=1):
         return None
 
 
-def generate_age_span(image_file_path, pattern):
+def generate_age(image_file_path, pattern):
     matches = pattern.match(image_file_path)
     if not matches:
         return None
 
-    birth_year = int(matches.group(1))
-    if birth_year < 1970:
-        return "age < 1970"
-    elif birth_year < 1980:
-        return "1970 < age < 1980"
-    else:
-        return "age > 1980"
+    return matches.group(1)
