@@ -1,6 +1,6 @@
 import os
 
-from data.common import load_image_data, generate_name, AutoList, TfWriter, generate_age
+from data.common import load_image_data, generate_name, AutoList, TfWriter
 
 
 def main():
@@ -73,7 +73,7 @@ def main():
                     img = load_image_data(current_file_path,
                                           resize=(args.resize, args.resize))
                     if args.label_type == "age":
-                        name = generate_age(current_file_path, re.compile(r".*/[FM](\d\d\d\d)/.*"))
+                        name = generate_name(current_file_path, re.compile(r".*/[FM](\d\d\d\d)/.*"))
                     elif args.label_type == "sex":
                         name = generate_name(current_file_path, re.compile(r".*/([FM])\d\d\d\d/.*"))
                     else:

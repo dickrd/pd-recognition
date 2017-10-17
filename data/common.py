@@ -121,11 +121,3 @@ def generate_name(image_file_path, pattern, index=1):
         return matches.group(index)
     else:
         return None
-
-
-def generate_age(image_file_path, pattern):
-    matches = pattern.match(image_file_path)
-    if not matches:
-        return None
-
-    return matches.group(1)
