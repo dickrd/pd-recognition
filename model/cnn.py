@@ -3,7 +3,7 @@ import tensorflow as tf
 from model.common import build_cnn
 
 
-def optimize(layer_output, true_class, save_path="./", report_rate=100,
+def optimize(layer_output, true_class, save_path="./", report_rate=100, scope=None,
              learning_rate=1e-4):
 
     print "Learning model parameters:\n" \
@@ -22,7 +22,14 @@ def optimize(layer_output, true_class, save_path="./", report_rate=100,
 
     # Optimizer that optimize the cost.
     global_step_op = tf.Variable(0, trainable=False, name="global_step")
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost, global_step=global_step_op)
+    if scope:
+        var_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
+                                                                                 global_step=global_step_op,
+                                                                                 var_list=var_to_train)
+    else:
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
+                                                                                 global_step=global_step_op)
 
     # Run supervised session.
     supervisor = tf.train.Supervisor(logdir=save_path)
@@ -55,7 +62,7 @@ def use_model():
     parser.add_argument("-l", "--class-label",
                         help="path to json file that contains a map of readable name to class label.")
     parser.add_argument("-t", "--model-type", default="general",
-                        help="which type of model to use(general, google, car)")
+                        help="which type of model to use(general, google, car, vgg)")
     parser.add_argument("-m", "--model-path", default="./",
                         help="path to stored model")
     parser.add_argument("-n", "--class-count", default=0, type=int,
@@ -64,12 +71,17 @@ def use_model():
                         help="resized image size")
     args = parser.parse_args()
 
+    scope = None
     if args.model_type == "google":
         from model.cnn_googlenet import build_googlenet
         build = build_googlenet
     elif args.model_type == "car":
         from model.cnn_car import build_car_cnn
         build = build_car_cnn
+    elif args.model_type == "vgg":
+        from model.cnn_vggface import build_custom_vgg
+        build = build_custom_vgg
+        scope = "custom_vgg"
     else:
         build = build_cnn
 
@@ -89,7 +101,7 @@ def use_model():
             print "Must specify number of classes(--class-count) or class label file(--class-label)!"
             return
 
-        train(model_path=args.model_path, train_data_path=args.data, class_count=class_count, build=build,
+        train(model_path=args.model_path, train_data_path=args.data, class_count=class_count, build=build, scope=scope,
               image_size=args.resize)
 
     elif args.action == "test":
@@ -131,7 +143,7 @@ def use_model():
         print "Unsupported action: " + args.action
 
 
-def train(model_path, train_data_path, class_count, image_size, image_channel=3, build=build_cnn,
+def train(model_path, train_data_path, class_count, image_size, image_channel=3, build=build_cnn, scope=None,
           num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800):
     from data.common import TfReader
     with tf.Graph().as_default():
@@ -144,7 +156,7 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
         y, y_pred_cls = build(input_tensor=images, num_class=class_count,
                               image_size=image_size, image_channel=image_channel)
         optimize(layer_output=y, true_class=classes,
-                 save_path=model_path)
+                 scope=scope, save_path=model_path)
 
 
 def test(model_path, test_data_path, class_count, image_size, image_channel=3, report_rate=10, build=build_cnn,
