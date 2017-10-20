@@ -27,9 +27,11 @@ def optimize(layer_output, true_class, save_path="./", report_rate=100, scope=No
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
                                                                                  global_step=global_step_op,
                                                                                  var_list=var_to_train)
+        print "Optimizing variables: " + var_to_train
     else:
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
                                                                                  global_step=global_step_op)
+        print "Optimizing all trainable variables."
 
     # Run supervised session.
     supervisor = tf.train.Supervisor(logdir=save_path)

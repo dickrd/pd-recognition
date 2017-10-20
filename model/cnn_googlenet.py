@@ -47,6 +47,7 @@ def build_googlenet(input_tensor, num_class, image_size, image_channel=3,
 
     layer_input_image = tf.reshape(input_tensor, [-1, image_size, image_size, image_channel])
     end_points = {}
+    print "Building GoogLeNet(https://arxiv.org/pdf/1409.4842.pdf)..."
     with tf.name_scope(scope, "googlenet", [input_tensor]):
         with ops.arg_scope([layers.max_pool2d], padding='SAME'):
             end_points['conv0'] = layers.conv2d(layer_input_image, 64, [7, 7], stride=2, scope='conv0')
