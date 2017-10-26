@@ -1,7 +1,9 @@
 import tensorflow as tf
+from tensorflow.python.ops import control_flow_ops
+from tensorflow.python.training import moving_averages
 
+from model.common import new_fc_layer
 
-FLAGS = tf.app.flags.FLAGS
 
 class Config:
     def __init__(self):
@@ -67,14 +69,12 @@ class Config:
         top[name] = value
 
     class Scope(dict):
+        # noinspection PyMissingConstructor
         def __init__(self, name):
             self.name = name
 
         def contains(self, var_scope_name):
             return var_scope_name.startswith(self.name)
-
-from tensorflow.python.ops import control_flow_ops
-from tensorflow.python.training import moving_averages
 
 
 MOVING_AVERAGE_DECAY = 0.9997
@@ -88,17 +88,59 @@ RESNET_VARIABLES = 'resnet_variables'
 UPDATE_OPS_COLLECTION = 'resnet_update_ops'  # must be grouped with training op
 IMAGENET_MEAN_BGR = [103.062623801, 115.902882574, 123.151630838, ]
 
+FLAGS = tf.app.flags.FLAGS
+
 tf.app.flags.DEFINE_integer('input_size', 224, "input image size")
-
-
 activation = tf.nn.relu
+
+
+def build_custom_resnet(input_tensor, num_class, image_size, image_channel=3,
+                        original_model="tensorflow-resnet-pretrained-20160509/ResNet-L101.ckpt"):
+    fc_size = 2000
+
+    # Pre-trained image size and channel.
+    assert image_size == 224
+    assert image_channel == 3
+
+    x = inference(input_tensor, is_training=False, num_classes=num_class)
+    trainables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+    saver = tf.train.Saver(trainables)
+    with tf.Session() as sess:
+        saver.restore(sess, original_model)
+        print "Restored: ", original_model
+
+    layer_last_conv = x
+    with tf.variable_scope("custom_resnet"):
+        num_features = layer_last_conv.get_shape()[1:].num_elements()
+        layer_flat = tf.reshape(layer_last_conv, [-1, num_features])
+
+        layer_fc1 = new_fc_layer(layer_last=layer_flat,
+                                 num_inputs=num_features,
+                                 num_outputs=fc_size,
+                                 use_relu=True)
+        layer_fc2 = new_fc_layer(layer_last=layer_fc1,
+                                 num_inputs=fc_size,
+                                 num_outputs=num_class,
+                                 use_relu=False)
+
+        # Output layer.
+        y = layer_fc2
+        # Use softmax to normalize the output.
+        y_pred = tf.nn.softmax(y)
+        # Use the most likely prediction as class label.
+        y_pred_cls = tf.argmax(y_pred, dimension=1)
+
+    return y, y_pred_cls
 
 
 def inference(x, is_training,
               num_classes=1000,
-              num_blocks=[3, 4, 6, 3],  # defaults to 50-layer network
-              use_bias=False, # defaults to using batch norm
+              use_bias=False,
               bottleneck=True):
+
+    # Defaults to 50-layer network
+    num_blocks=[3, 4, 6, 3]
+
     c = Config()
     c['bottleneck'] = bottleneck
     c['is_training'] = tf.convert_to_tensor(is_training,
@@ -144,10 +186,6 @@ def inference(x, is_training,
 
     # post-net
     x = tf.reduce_mean(x, reduction_indices=[1, 2], name="avg_pool")
-
-    if num_classes:
-        with tf.variable_scope('fc'):
-            x = fc(x, c)
 
     return x
 
@@ -195,19 +233,7 @@ def inference_small_config(x, c):
     # post-net
     x = tf.reduce_mean(x, reduction_indices=[1, 2], name="avg_pool")
 
-    if c['num_classes'] != None:
-        with tf.variable_scope('fc'):
-            x = fc(x, c)
-
     return x
-
-
-def _imagenet_preprocess(rgb):
-    """Changes RGB [0,1] valued image to BGR [0,255] with mean subtracted."""
-    red, green, blue = tf.split(3, 3, rgb * 255.0)
-    bgr = tf.concat(3, [blue, green, red])
-    bgr -= IMAGENET_MEAN_BGR
-    return bgr
 
 
 def loss(logits, labels):
@@ -217,7 +243,7 @@ def loss(logits, labels):
     regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
 
     loss_ = tf.add_n([cross_entropy_mean] + regularization_losses)
-    tf.scalar_summary('loss', loss_)
+    #tf.scalar_summary('loss', loss_)
 
     return loss_
 
@@ -337,31 +363,15 @@ def bn(x, c):
     return x
 
 
-def fc(x, c):
-    num_units_in = x.get_shape()[1]
-    num_units_out = c['fc_units_out']
-    weights_initializer = tf.truncated_normal_initializer(
-        stddev=FC_WEIGHT_STDDEV)
-
-    weights = _get_variable('weights',
-                            shape=[num_units_in, num_units_out],
-                            initializer=weights_initializer,
-                            weight_decay=FC_WEIGHT_STDDEV)
-    biases = _get_variable('biases',
-                           shape=[num_units_out],
-                           initializer=tf.zeros_initializer)
-    x = tf.nn.xw_plus_b(x, weights, biases)
-    return x
-
-
 def _get_variable(name,
                   shape,
                   initializer,
                   weight_decay=0.0,
                   dtype='float',
                   trainable=True):
-    "A little wrapper around tf.get_variable to do weight decay and add to"
-    "resnet collection"
+    """
+    A little wrapper around tf.get_variable to do weight decay and add to resnet collection.
+    """
     if weight_decay > 0:
         regularizer = tf.contrib.layers.l2_regularizer(weight_decay)
     else:

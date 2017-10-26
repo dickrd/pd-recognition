@@ -67,6 +67,7 @@ def build_custom_vgg(input_tensor, num_class, image_size, image_channel=3,
     """
     fc_size = 2000
 
+    # Pre-trained image size and channel.
     assert image_size == 224
     assert image_channel == 3
 
