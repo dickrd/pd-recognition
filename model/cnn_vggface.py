@@ -70,17 +70,17 @@ def build_custom_vgg(input_tensor, num_class, image_size, image_channel=3,
     assert image_size == 224
     assert image_channel == 3
 
+    # 'RGB'->'BGR'
+    input_tensor = input_tensor[:, :, :, ::-1]
     mean = tf.constant([103.939, 116.779, 123.68], dtype=tf.float32)
     mean = tf.reshape(mean, [1, 1, 1, 3])
     image_batch_sub_mean = input_tensor - mean
-    # 'RGB'->'BGR'
-    #image_batch_sub_mean = image_batch_sub_mean[:, :, :, ::-1]
 
     network, average_image, class_names = vgg_face(original_model, image_batch_sub_mean)
 
     layer_latest_conv = network['pool5']
 
-    with tf.variable_scope("custom_vgg") as scope:
+    with tf.variable_scope("custom_vgg"):
         num_features = layer_latest_conv.get_shape()[1:].num_elements()
         layer_flat = tf.reshape(layer_latest_conv, [-1, num_features])
 
