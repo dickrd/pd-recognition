@@ -70,13 +70,13 @@ def build_custom_vgg(input_tensor, num_class, image_size, image_channel=3,
     assert image_size == 224
     assert image_channel == 3
 
-    input_tensor[:, :, :, 0] -= 103.939
-    input_tensor[:, :, :, 1] -= 116.779
-    input_tensor[:, :, :, 2] -= 123.68
+    mean = tf.constant([103.939, 116.779, 123.68], dtype=tf.float32)
+    mean = tf.reshape(mean, [1, 1, 1, 3])
+    image_batch_sub_mean = input_tensor - mean
     # 'RGB'->'BGR'
-    #input_tensor = input_tensor[:, :, :, ::-1]
+    #image_batch_sub_mean = image_batch_sub_mean[:, :, :, ::-1]
 
-    network, average_image, class_names = vgg_face(original_model, input_tensor)
+    network, average_image, class_names = vgg_face(original_model, image_batch_sub_mean)
 
     layer_latest_conv = network['pool5']
 
