@@ -102,7 +102,13 @@ def build_custom_resnet(input_tensor, num_class, image_size, image_channel=3,
     assert image_size == 224
     assert image_channel == 3
 
-    x = inference(input_tensor, is_training=False, num_classes=num_class)
+    # 'RGB'->'BGR'
+    input_tensor = input_tensor[:, :, :, ::-1]
+    mean = tf.constant(IMAGENET_MEAN_BGR, dtype=tf.float32)
+    mean = tf.reshape(mean, [1, 1, 1, 3])
+    image_batch_sub_mean = input_tensor - mean
+
+    x = inference(image_batch_sub_mean, is_training=False, num_classes=num_class)
     trainables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     saver = tf.train.Saver(trainables)
     with tf.Session() as sess:
@@ -376,7 +382,7 @@ def _get_variable(name,
         regularizer = tf.contrib.layers.l2_regularizer(weight_decay)
     else:
         regularizer = None
-    collections = [tf.GraphKeys.VARIABLES, RESNET_VARIABLES]
+    collections = [tf.GraphKeys.GLOBAL_VARIABLES, RESNET_VARIABLES]
     return tf.get_variable(name,
                            shape=shape,
                            initializer=initializer,
