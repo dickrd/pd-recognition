@@ -95,7 +95,11 @@ activation = tf.nn.relu
 
 
 def build_custom_resnet(input_tensor, num_class, image_size, image_channel=3,
-                        original_model="tensorflow-resnet-pretrained-20160509/ResNet-L101.ckpt"):
+                        original_model="tensorflow-resnet-pretrained-20160509/ResNet-L152.ckpt"):
+    """
+    Model downloaded from
+    https://raw.githubusercontent.com/ry/tensorflow-resnet/master/data/tensorflow-resnet-pretrained-20160509.tar.gz.torrent
+    """
     fc_size = 2000
 
     # Pre-trained image size and channel.
@@ -143,9 +147,11 @@ def inference(x, is_training,
               num_classes=1000,
               use_bias=False,
               bottleneck=True):
-
-    # Defaults to 50-layer network
-    num_blocks=[3, 4, 6, 3]
+    """
+    Code from https://github.com/ry/tensorflow-resnet
+    """
+    # Defaults to 152-layer network
+    num_blocks=[3, 8, 36, 3]
 
     c = Config()
     c['bottleneck'] = bottleneck

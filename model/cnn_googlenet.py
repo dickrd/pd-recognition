@@ -3,40 +3,6 @@ import tensorflow.contrib.layers as layers
 import tensorflow.contrib.framework as ops
 
 
-def _get_inception_layer(inputs, conv11_size, conv33_11_size, conv33_size,
-                         conv55_11_size, conv55_size, pool11_size):
-    with tf.variable_scope("conv_1x1"):
-        conv11 = layers.conv2d(inputs, conv11_size, [1, 1])
-    with tf.variable_scope("conv_3x3"):
-        conv33_11 = layers.conv2d(inputs, conv33_11_size, [1, 1])
-        conv33 = layers.conv2d(conv33_11, conv33_size, [3, 3])
-    with tf.variable_scope("conv_5x5"):
-        conv55_11 = layers.conv2d(inputs, conv55_11_size, [1, 1])
-        conv55 = layers.conv2d(conv55_11, conv55_size, [5, 5])
-    with tf.variable_scope("pool_proj"):
-        pool_proj = layers.max_pool2d(inputs, [3, 3], stride=1)
-        pool11 = layers.conv2d(pool_proj, pool11_size, [1, 1])
-    return tf.concat([conv11, conv33, conv55, pool11], 3)
-
-
-def _aux_logit_layer(inputs, num_classes, is_training):
-    with tf.variable_scope("pool2d"):
-        pooled = layers.avg_pool2d(inputs, [5, 5], stride=3)
-    with tf.variable_scope("conv11"):
-        conv11 = layers.conv2d(pooled, 128, [1, 1])
-    with tf.variable_scope("flatten"):
-        flat = tf.reshape(conv11, [-1, 2048])
-    with tf.variable_scope("fc"):
-        fc = layers.fully_connected(flat, 1024, activation_fn=None)
-    with tf.variable_scope("drop"):
-        drop = layers.dropout(fc, 0.3, is_training=is_training)
-    with tf.variable_scope("linear"):
-        linear = layers.fully_connected(drop, num_classes, activation_fn=None)
-    with tf.variable_scope("soft"):
-        soft = tf.nn.softmax(linear)
-    return soft
-
-
 def build_googlenet(input_tensor, num_class, image_size, image_channel=3,
                     dropout_keep_prob=0.4,
                     is_training=True,
@@ -103,3 +69,37 @@ def build_googlenet(input_tensor, num_class, image_size, image_channel=3,
             y_pred_cls = tf.argmax(end_points['predictions'], dimension=1)
 
     return end_points['logits'], y_pred_cls
+
+
+def _get_inception_layer(inputs, conv11_size, conv33_11_size, conv33_size,
+                         conv55_11_size, conv55_size, pool11_size):
+    with tf.variable_scope("conv_1x1"):
+        conv11 = layers.conv2d(inputs, conv11_size, [1, 1])
+    with tf.variable_scope("conv_3x3"):
+        conv33_11 = layers.conv2d(inputs, conv33_11_size, [1, 1])
+        conv33 = layers.conv2d(conv33_11, conv33_size, [3, 3])
+    with tf.variable_scope("conv_5x5"):
+        conv55_11 = layers.conv2d(inputs, conv55_11_size, [1, 1])
+        conv55 = layers.conv2d(conv55_11, conv55_size, [5, 5])
+    with tf.variable_scope("pool_proj"):
+        pool_proj = layers.max_pool2d(inputs, [3, 3], stride=1)
+        pool11 = layers.conv2d(pool_proj, pool11_size, [1, 1])
+    return tf.concat([conv11, conv33, conv55, pool11], 3)
+
+
+def _aux_logit_layer(inputs, num_classes, is_training):
+    with tf.variable_scope("pool2d"):
+        pooled = layers.avg_pool2d(inputs, [5, 5], stride=3)
+    with tf.variable_scope("conv11"):
+        conv11 = layers.conv2d(pooled, 128, [1, 1])
+    with tf.variable_scope("flatten"):
+        flat = tf.reshape(conv11, [-1, 2048])
+    with tf.variable_scope("fc"):
+        fc = layers.fully_connected(flat, 1024, activation_fn=None)
+    with tf.variable_scope("drop"):
+        drop = layers.dropout(fc, 0.3, is_training=is_training)
+    with tf.variable_scope("linear"):
+        linear = layers.fully_connected(drop, num_classes, activation_fn=None)
+    with tf.variable_scope("soft"):
+        soft = tf.nn.softmax(linear)
+    return soft
