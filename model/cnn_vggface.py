@@ -6,7 +6,9 @@ from model.common import new_fc_layer
 
 
 def vgg_face(param_path, input_maps):
-
+    """
+    Code from https://github.com/ZZUTK/Tensorflow-VGG-face
+    """
     data = loadmat(param_path)
 
     # read meta info
@@ -59,10 +61,20 @@ def vgg_face(param_path, input_maps):
 
 def build_custom_vgg(input_tensor, num_class, image_size, image_channel=3,
                      original_model="vgg-face.mat"):
+    """
+    Build custom vgg classification layers using downloaded original model in .mat format
+    here: http://www.vlfeat.org/matconvnet/pretrained/#face-recognition
+    """
     fc_size = 2000
 
     assert image_size == 224
     assert image_channel == 3
+
+    input_tensor[:, :, :, 0] -= 103.939
+    input_tensor[:, :, :, 1] -= 116.779
+    input_tensor[:, :, :, 2] -= 123.68
+    # 'RGB'->'BGR'
+    #input_tensor = input_tensor[:, :, :, ::-1]
 
     network, average_image, class_names = vgg_face(original_model, input_tensor)
 
