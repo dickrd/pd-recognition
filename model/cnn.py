@@ -88,8 +88,11 @@ def use_model():
         from model.cnn_resnet import build_custom_resnet
         build = build_custom_resnet
         scope = "custom_resnet"
-    else:
+    elif args.model_type == "general":
         build = build_cnn
+    else:
+        print "Unsupported model type: " + args.model_type
+        return
 
     if args.action == "train":
         if not args.data:

@@ -72,8 +72,8 @@ def build_custom_vgg(input_tensor, num_class, image_size, image_channel=3,
     assert image_channel == 3
 
     # 'RGB'->'BGR'
-    input_tensor = input_tensor[:, :, :, ::-1]
-    mean = tf.constant([103.939, 116.779, 123.68], dtype=tf.float32)
+    #input_tensor = input_tensor[:, :, :, ::-1]
+    mean = tf.constant([129.1862793, 104.76238251, 93.59396362], dtype=tf.float32)
     mean = tf.reshape(mean, [1, 1, 1, 3])
     image_batch_sub_mean = input_tensor - mean
 
