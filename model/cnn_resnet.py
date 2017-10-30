@@ -102,6 +102,7 @@ def build_custom_resnet(input_tensor, num_class, image_size, image_channel=3,
     """
     fc1_size = 1500
     fc2_size = 500
+    print "Custom fc layer: {0}, {1}".format(fc1_size, fc2_size)
 
     # Pre-trained image size and channel.
     assert image_size == 224

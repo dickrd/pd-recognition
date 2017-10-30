@@ -1,6 +1,41 @@
 import tensorflow as tf
 
 
+def optimize(cost, save_path="./", report_rate=100, scope=None,
+             learning_rate=1e-4):
+
+    print "Learning model parameters:\n" \
+          "\tmodel save path:\t{0}\n" \
+          "\treport     rate:\t{1}\n" \
+          "\tlearning   rate:\t{2}".format(save_path, report_rate, learning_rate)
+
+    global_step_op = tf.Variable(0, trainable=False, name="global_step")
+    if scope:
+        var_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
+                                                                                 global_step=global_step_op,
+                                                                                 var_list=var_to_train)
+        print "Optimizing variables: {0}".format(var_to_train)
+    else:
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
+                                                                                 global_step=global_step_op)
+        print "Optimizing all trainable variables."
+
+    # Run supervised session.
+    supervisor = tf.train.Supervisor(logdir=save_path)
+    with supervisor.managed_session() as sess:
+        global_step = -1
+        try:
+            while not supervisor.should_stop():
+                _, global_step, current_cost = sess.run([optimizer, global_step_op, cost])
+                if global_step % report_rate == 0:
+                    print "{0} steps passed with current cost: {1}.".format(global_step, current_cost)
+        except tf.errors.OutOfRangeError:
+            print "All images used in {0} steps.".format(global_step)
+        finally:
+            supervisor.request_stop()
+
+
 def build_cnn(input_tensor, num_class, image_size, image_channel=3):
 
     # Hyper-parameters.

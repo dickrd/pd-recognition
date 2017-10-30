@@ -5,6 +5,53 @@ from scipy.io import loadmat
 from model.common import new_fc_layer
 
 
+def build_custom_vgg(input_tensor, num_class, image_size, image_channel=3,
+                     original_model="vgg-face.mat"):
+    """
+    Build custom vgg classification layers using downloaded original model in .mat format
+    here: http://www.vlfeat.org/matconvnet/pretrained/#face-recognition
+    """
+    fc_size = 2000
+    print "Custom fc layer: ", fc_size
+
+    # Pre-trained image size and channel.
+    assert image_size == 224
+    assert image_channel == 3
+
+    # 'RGB'->'BGR'
+    #input_tensor = input_tensor[:, :, :, ::-1]
+    mean = tf.constant([129.1862793, 104.76238251, 93.59396362], dtype=tf.float32)
+    mean = tf.reshape(mean, [1, 1, 1, 3])
+    image_batch_sub_mean = input_tensor - mean
+
+    network, average_image, class_names = vgg_face(original_model, image_batch_sub_mean)
+
+    layer_latest_conv = network['pool5']
+
+    with tf.variable_scope("custom_vgg"):
+        num_features = layer_latest_conv.get_shape()[1:].num_elements()
+        layer_flat = tf.reshape(layer_latest_conv, [-1, num_features])
+
+        layer_fc1 = new_fc_layer(layer_last=layer_flat,
+                                 num_inputs=num_features,
+                                 num_outputs=fc_size,
+                                 use_relu=True)
+        layer_fc2 = new_fc_layer(layer_last=layer_fc1,
+                                 num_inputs=fc_size,
+                                 num_outputs=num_class,
+                                 use_relu=False)
+
+        # Output layer.
+        y = layer_fc2
+        # Use softmax to normalize the output.
+        y_pred = tf.nn.softmax(y)
+        # Use the most likely prediction as class label.
+        y_pred_cls = tf.argmax(y_pred, dimension=1)
+
+
+    return y, y_pred_cls
+
+
 def vgg_face(param_path, input_maps):
     """
     Code from https://github.com/ZZUTK/Tensorflow-VGG-face
@@ -57,49 +104,3 @@ def vgg_face(param_path, input_maps):
         network[name] = current
 
     return network, average_image, class_names
-
-
-def build_custom_vgg(input_tensor, num_class, image_size, image_channel=3,
-                     original_model="vgg-face.mat"):
-    """
-    Build custom vgg classification layers using downloaded original model in .mat format
-    here: http://www.vlfeat.org/matconvnet/pretrained/#face-recognition
-    """
-    fc_size = 2000
-
-    # Pre-trained image size and channel.
-    assert image_size == 224
-    assert image_channel == 3
-
-    # 'RGB'->'BGR'
-    #input_tensor = input_tensor[:, :, :, ::-1]
-    mean = tf.constant([129.1862793, 104.76238251, 93.59396362], dtype=tf.float32)
-    mean = tf.reshape(mean, [1, 1, 1, 3])
-    image_batch_sub_mean = input_tensor - mean
-
-    network, average_image, class_names = vgg_face(original_model, image_batch_sub_mean)
-
-    layer_latest_conv = network['pool5']
-
-    with tf.variable_scope("custom_vgg"):
-        num_features = layer_latest_conv.get_shape()[1:].num_elements()
-        layer_flat = tf.reshape(layer_latest_conv, [-1, num_features])
-
-        layer_fc1 = new_fc_layer(layer_last=layer_flat,
-                                 num_inputs=num_features,
-                                 num_outputs=fc_size,
-                                 use_relu=True)
-        layer_fc2 = new_fc_layer(layer_last=layer_fc1,
-                                 num_inputs=fc_size,
-                                 num_outputs=num_class,
-                                 use_relu=False)
-
-        # Output layer.
-        y = layer_fc2
-        # Use softmax to normalize the output.
-        y_pred = tf.nn.softmax(y)
-        # Use the most likely prediction as class label.
-        y_pred_cls = tf.argmax(y_pred, dimension=1)
-
-
-    return y, y_pred_cls
