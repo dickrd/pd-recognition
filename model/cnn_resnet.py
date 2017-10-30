@@ -100,7 +100,8 @@ def build_custom_resnet(input_tensor, num_class, image_size, image_channel=3,
     Model downloaded from
     https://raw.githubusercontent.com/ry/tensorflow-resnet/master/data/tensorflow-resnet-pretrained-20160509.tar.gz.torrent
     """
-    fc_size = 2000
+    fc1_size = 1500
+    fc2_size = 500
 
     # Pre-trained image size and channel.
     assert image_size == 224
@@ -126,15 +127,19 @@ def build_custom_resnet(input_tensor, num_class, image_size, image_channel=3,
 
         layer_fc1 = new_fc_layer(layer_last=layer_flat,
                                  num_inputs=num_features,
-                                 num_outputs=fc_size,
+                                 num_outputs=fc1_size,
                                  use_relu=True)
         layer_fc2 = new_fc_layer(layer_last=layer_fc1,
-                                 num_inputs=fc_size,
+                                 num_inputs=fc1_size,
+                                 num_outputs=fc2_size,
+                                 use_relu=False)
+        layer_fc3 = new_fc_layer(layer_last=layer_fc2,
+                                 num_inputs=fc2_size,
                                  num_outputs=num_class,
                                  use_relu=False)
 
         # Output layer.
-        y = layer_fc2
+        y = layer_fc3
         # Use softmax to normalize the output.
         y_pred = tf.nn.softmax(y)
         # Use the most likely prediction as class label.
