@@ -64,7 +64,7 @@ def use_model():
     parser.add_argument("-l", "--class-label",
                         help="path to json file that contains a map of readable name to class label.")
     parser.add_argument("-t", "--model-type", default="general",
-                        help="which type of model to use(general, google, car, vgg-face, resnet)")
+                        help="which type of model to use(general, google, car, vggface, resnet)")
     parser.add_argument("-m", "--model-path", default="./",
                         help="path to stored model")
     parser.add_argument("-n", "--class-count", default=0, type=int,
@@ -80,7 +80,7 @@ def use_model():
     elif args.model_type == "car":
         from model.cnn_car import build_car_cnn
         build = build_car_cnn
-    elif args.model_type == "vgg-face":
+    elif args.model_type == "vggface":
         from model.cnn_vggface import build_custom_vgg
         build = build_custom_vgg
         scope = "custom_vgg"
