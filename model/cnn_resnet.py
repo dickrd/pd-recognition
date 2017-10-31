@@ -133,7 +133,7 @@ def build_custom_resnet(input_tensor, num_class, image_size, image_channel=3,
         layer_fc2 = new_fc_layer(layer_last=layer_fc1,
                                  num_inputs=fc1_size,
                                  num_outputs=fc2_size,
-                                 use_relu=False)
+                                 use_relu=True)
         layer_fc3 = new_fc_layer(layer_last=layer_fc2,
                                  num_inputs=fc2_size,
                                  num_outputs=num_class,
@@ -254,18 +254,6 @@ def inference_small_config(x, c):
     return x
 
 
-def loss(logits, labels):
-    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels)
-    cross_entropy_mean = tf.reduce_mean(cross_entropy)
-
-    regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-
-    loss_ = tf.add_n([cross_entropy_mean] + regularization_losses)
-    #tf.scalar_summary('loss', loss_)
-
-    return loss_
-
-
 def stack(x, c):
     for n in range(c['num_blocks']):
         s = c['stack_stride'] if n == 0 else 1
@@ -381,6 +369,22 @@ def bn(x, c):
     return x
 
 
+def conv(x, c):
+    ksize = c['ksize']
+    stride = c['stride']
+    filters_out = c['conv_filters_out']
+
+    filters_in = x.get_shape()[-1]
+    shape = [ksize, ksize, filters_in, filters_out]
+    initializer = tf.truncated_normal_initializer(stddev=CONV_WEIGHT_STDDEV)
+    weights = _get_variable('weights',
+                            shape=shape,
+                            dtype='float',
+                            initializer=initializer,
+                            weight_decay=CONV_WEIGHT_DECAY)
+    return tf.nn.conv2d(x, weights, [1, stride, stride, 1], padding='SAME')
+
+
 def _get_variable(name,
                   shape,
                   initializer,
@@ -402,22 +406,6 @@ def _get_variable(name,
                            regularizer=regularizer,
                            collections=collections,
                            trainable=trainable)
-
-
-def conv(x, c):
-    ksize = c['ksize']
-    stride = c['stride']
-    filters_out = c['conv_filters_out']
-
-    filters_in = x.get_shape()[-1]
-    shape = [ksize, ksize, filters_in, filters_out]
-    initializer = tf.truncated_normal_initializer(stddev=CONV_WEIGHT_STDDEV)
-    weights = _get_variable('weights',
-                            shape=shape,
-                            dtype='float',
-                            initializer=initializer,
-                            weight_decay=CONV_WEIGHT_DECAY)
-    return tf.nn.conv2d(x, weights, [1, stride, stride, 1], padding='SAME')
 
 
 def _max_pool(x, ksize=3, stride=2):
