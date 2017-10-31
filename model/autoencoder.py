@@ -110,7 +110,7 @@ def train_autoencoder(model_path, train_data_path, image_size,
         y, z = build_autoencoder(images)
 
         # Cost function measures pixel-wise difference
-        cost = tf.reduce_sum(tf.square(z - images))
+        cost = tf.reduce_sum(tf.square(y - images))
         optimize(cost=cost,
                  scope=None, save_path=model_path)
 
@@ -127,7 +127,7 @@ def test_autoencoder(model_path, test_data_path, image_size, report_rate=10,
         y, z = build_autoencoder(images)
 
         # Cost function measures pixel-wise difference
-        cost = tf.reduce_sum(tf.square(y - classes))
+        cost = tf.reduce_sum(tf.square(y - images))
 
         # Run session.
         init_op = tf.group(tf.global_variables_initializer(),
