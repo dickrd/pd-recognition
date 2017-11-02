@@ -24,7 +24,7 @@ def build_googlecar(input_tensor, num_class, image_size, image_channel=3,
     net = GoogleNet(inputs={"input": image_batch_sub_mean}, trainable=False)
     with tf.Session() as sess:
         net.load(data_path=original_model, session=sess)
-        layer_latest_conv = sess.graph.get_tensor_by_name(name="pool5")
+        layer_latest_conv = sess.graph.get_tensor_by_name(name="pool5:0")
         print "GoogleNet for cars load."
 
     with tf.variable_scope("custom_googlenet"):
