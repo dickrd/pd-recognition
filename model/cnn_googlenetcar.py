@@ -21,7 +21,7 @@ def build_googlecar(input_tensor, num_class, image_size, image_channel=3,
     mean = tf.reshape(mean, [1, 1, 1, 3])
     image_batch_sub_mean = input_tensor - mean
 
-    net = GoogleNet(inputs=image_batch_sub_mean, trainable=False)
+    net = GoogleNet(inputs={"data": image_batch_sub_mean}, trainable=False)
     with tf.Session() as sess:
         net.load(data_path=original_model, session=sess)
         layer_latest_conv = sess.graph.get_operation_by_name(name="pool5")
