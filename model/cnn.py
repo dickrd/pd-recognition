@@ -117,7 +117,7 @@ def _use_model():
     parser.add_argument("-l", "--class-label",
                         help="path to json file that contains a map of readable name to class label.")
     parser.add_argument("-t", "--model-type", default="general",
-                        help="which type of model to use(general, autoencoder, google, vggface, resnet)")
+                        help="which type of model to use(general, autoencoder, googlecar, vggface, resnet)")
     parser.add_argument("-m", "--model-path", default="./",
                         help="path to stored model")
     parser.add_argument("-n", "--class-count", default=0, type=int,
@@ -127,9 +127,9 @@ def _use_model():
     args = parser.parse_args()
 
     scope = None
-    if args.model_type == "google":
-        from model.cnn_googlenet import build_googlenet
-        build = build_googlenet
+    if args.model_type == "googlecar":
+        from model.cnn_googlenetcar import build_googlecar
+        build = build_googlecar
     elif args.model_type == "autoencoder":
         from model.autoencoder import build_decoder_classifier
         build = build_decoder_classifier

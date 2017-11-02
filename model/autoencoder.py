@@ -69,6 +69,7 @@ def build_autoencoder(x_in, corruption=False):
         shape_list.append(input_shape)
         shape = [filter_size_list[i], filter_size_list[i], input_shape[-1], num_filters_list[i]]
         weights = new_weights(shape=shape)
+        weight_list.append(weights)
         biases = new_biases(length=num_filters_list[i])
         layer = tf.nn.conv2d(input=current_input, filter=weights,
                              strides=[1, 2, 2, 1],
