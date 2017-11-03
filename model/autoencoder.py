@@ -3,13 +3,21 @@ import tensorflow as tf
 from model.common import new_biases, new_weights, new_fc_layer, optimize
 
 
-def build_decoder_classifier(input_tensor, num_class, image_size, image_channel=3):
+def build_decoder_classifier(input_tensor, num_class, image_size, image_channel=3,
+                             original_model="autoencoder/"):
     print "Using image: {0}x{0}x{1}".format(image_size, image_channel)
 
     fc_size = 1500
     print "Fc layer: ", fc_size
 
     y, z = build_autoencoder(input_tensor)
+
+    trainables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+    saver = tf.train.Saver(trainables)
+    with tf.Session() as sess:
+        checkpoint_name = tf.train.latest_checkpoint(original_model)
+        saver.restore(sess, checkpoint_name)
+        print "Restored: ", checkpoint_name
 
     with tf.variable_scope("custom_classifier"):
         layer_latest_conv = z
