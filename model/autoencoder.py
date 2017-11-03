@@ -58,6 +58,7 @@ def build_decoder_classifier(input_tensor, num_class, image_size, image_channel=
 def build_autoencoder(x_in, corruption=False):
     num_filters_list = [100, 200, 300, 200]
     filter_size_list = [3, 3, 3, 3]
+    print "Input shape: ", x_in.get_shape().as_list()
     print "Autoencoder configuration: \n" \
           "\t{0}\n" \
           "\t{1}".format(num_filters_list, filter_size_list)
