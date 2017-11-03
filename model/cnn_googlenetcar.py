@@ -25,7 +25,7 @@ def build_googlecar(input_tensor, num_class, image_size, image_channel=3,
     with tf.Session() as sess:
         net.load(data_path=original_model, session=sess)
         layer_latest_conv = sess.graph.get_tensor_by_name(name="pool5:0")
-        print "GoogleNet for cars load."
+        print "GoogleNet for cars load (non-trainable mode)."
 
     with tf.variable_scope("custom_googlenet"):
         num_features = layer_latest_conv.get_shape()[1:].num_elements()
