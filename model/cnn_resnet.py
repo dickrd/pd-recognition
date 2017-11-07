@@ -97,8 +97,8 @@ activation = tf.nn.relu
 def build_custom_resnet(input_tensor, num_class, image_size, image_channel=3,
                         original_model="tensorflow-resnet-pretrained-20160509/ResNet-L50.ckpt"):
     """
-    Model downloaded from
-    https://raw.githubusercontent.com/ry/tensorflow-resnet/master/data/tensorflow-resnet-pretrained-20160509.tar.gz.torrent
+    Model downloaded
+    here: https://raw.githubusercontent.com/ry/tensorflow-resnet/master/data/tensorflow-resnet-pretrained-20160509.tar.gz.torrent
     """
     fc_size = 2000
     print "Custom fc layer: ", fc_size
