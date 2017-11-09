@@ -63,8 +63,10 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
         if tuning_save.update(accuracy=accuracy, checkpoint=checkpoint_name):
             print "Found new best model with accuracy: {0} (previous accuracy is {1} at {2})."\
                 .format(tuning_save.status["best_accuracy"], previous_status["best_accuracy"], previous_status["checkpoint"])
+            import glob
             import shutil
-            shutil.copy2(os.path.join(save_path, checkpoint_name + "*"), os.path.join(save_path, "tuned"))
+            for a_file in glob.glob(os.path.join(save_path, checkpoint_name) + "*"):
+                shutil.copy2(a_file, os.path.join(save_path, "tuned"))
 
 
 def _start_tuning():
