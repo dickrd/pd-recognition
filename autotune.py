@@ -1,9 +1,8 @@
 import json
 import os
-import tensorflow as tf
 
-from data.common import TfReader
 from model.common import build_cnn
+from model.cnn import train, test
 
 
 class TuningSave(object):
@@ -17,17 +16,16 @@ class TuningSave(object):
         else:
             self.status = {
                 "best_accuracy": 0,
-                "at_step": 0,
-                "learning_rate": 1e-1,
+                "checkpoint": "",
                 "iteration": 0
             }
+            os.mkdir(os.path.join(save_path, "tuned"))
 
-    def update(self, accuracy, step, learning_rate):
-        self.status["learning_rate"] = learning_rate
+    def update(self, accuracy, checkpoint):
 
         if accuracy > self.status["best_accuracy"]:
             self.status["best_accuracy"] = accuracy
-            self.status["at_step"] = step
+            self.status["checkpoint"] = checkpoint
             return True
         return False
 
@@ -46,102 +44,27 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
     tuning_save = TuningSave(save_path=save_path)
     print "Tuning model parameters:\n" \
           "\tmodel save path:\t{0}\n" \
-          "\ttuning     rate:\t{1}\n" \
           "\ttuning   status:\t{2}".format(save_path, tuning_rate, tuning_save.status)
 
-    # Network structure.
-    x = tf.placeholder(tf.float32, shape=[batch_size, image_size, image_size, 3], name='image_input')
-    y, y_pred_cls = build(input_tensor=x, num_class=class_count, image_size=image_size, image_channel=image_channel)
-    global_step_op = tf.Variable(0, trainable=False, name="global_step")
-
-    if scope:
-        var_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
-        print "Tuning variables: {0}".format(var_to_train)
-    else:
-        var_to_train = None
-        print "Tuning all trainable variables."
-
-    # Run session.
-    accurate_saver = tf.train.Saver()
-    learning_rate = tuning_save.status["learning_rate"]
-    supervisor = tf.train.Supervisor(logdir=save_path)
-    with supervisor.managed_session() as sess:
-        global_step = -1
-        test_accuracy = -1.0
-
+    while True:
         tuning_save.next_iteration()
-        train_images, train_classes = TfReader(data_path=train_data_path, size=(image_size, image_size)) \
-            .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
-        train_feed = {x: train_images.eval()}
+        print "Start training: ", tuning_save.status["iteration"]
+        train(model_path=save_path, train_data_path=train_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel,
+              build=build, scope=scope, num_epoch=1,
+              batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+        print "Start testing: ", tuning_save.status["iteration"]
+        accuracy = test(model_path=save_path, test_data_path=test_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel,
+                        build=build, report_rate=100,
+                        batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
 
-        optimizer = _get_optimizer(logits=y, labels=train_classes,
-                                   learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
-        while True:
-            try:
-                _, global_step = sess.run([optimizer, global_step_op], feed_dict=train_feed)
-
-                if global_step % tuning_rate == 0:
-                    print "{0} steps passed\t".format(global_step),
-                    test_images, test_classes = TfReader(data_path=test_data_path, size=(image_size, image_size)) \
-                        .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
-                    test_feed = {x: test_images.eval()}
-                    accuracy = tf.reduce_mean(tf.cast(tf.equal(y_pred_cls, test_classes), tf.float32))
-
-                    overall_accuracy = 0.0
-                    step_count = 0.0
-                    try:
-                        while True:
-                            step_count += 1.0
-                            current_accuracy = sess.run([accuracy], feed_dict=test_feed)
-                            overall_accuracy += current_accuracy
-                    except tf.errors.OutOfRangeError:
-                        pass
-                    finally:
-                        print "accuracy: {0}".format(overall_accuracy / step_count)
-
-                    learning_rate /= global_step * 10
-                    optimizer = _get_optimizer(logits=y, labels=train_classes,
-                                               learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
-                    print "Learning rate changed to :", learning_rate
-
-                    previous_status = "(previous best is {0} at step {1})"\
-                        .format(tuning_save.status["best_accuracy"], tuning_save.status["at_step"])
-                    if tuning_save.update(accuracy=test_accuracy, step=global_step, learning_rate=learning_rate):
-                        print "New best accuracy found: {0} {1}"\
-                            .format(tuning_save.status["best_accuracy"], previous_status)
-                        accurate_saver.save(sess=sess,
-                                               save_path=os.path.join(save_path,
-                                                                      "new_best_model.{0}.ckpt".format(global_step)))
-                    tuning_save.save()
-
-            except tf.errors.OutOfRangeError:
-                print "At step {0}, iteration {1} complete. Current accuracy: {2}, best accuracy: {3} (at step {4})"\
-                    .format(global_step, tuning_save.status["iteration"],
-                            test_accuracy, tuning_save.status["best_accuracy"], tuning_save.status["at_step"])
-
-                tuning_save.next_iteration()
-                train_images, train_classes = TfReader(data_path=train_data_path, size=(image_size, image_size)) \
-                    .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
-                train_feed = {x: train_images.eval()}
-                optimizer = _get_optimizer(logits=y, labels=train_classes,
-                                           learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
-
-                tuning_save.save()
-
-
-def _get_optimizer(logits, labels, learning_rate, global_step_op, var_to_train):
-    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
-                                                                   labels=labels)
-    cost = tf.reduce_mean(cross_entropy)
-
-    if var_to_train:
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
-                                                                                 global_step=global_step_op,
-                                                                                 var_list=var_to_train)
-    else:
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
-                                                                                 global_step=global_step_op)
-    return optimizer
+        previous_status = tuning_save.status
+        with open(os.path.join(save_path, "checkpoint")) as checkpoint_file:
+            checkpoint_name = checkpoint_file.readline().strip().split(':', 1)[1].strip()[1:-1]
+        if tuning_save.update(accuracy=accuracy, checkpoint=checkpoint_name):
+            print "Found new best model with accuracy: {0} (previous accuracy is {1} at {2})."\
+                .format(tuning_save.status["best_accuracy"], previous_status["best_accuracy"], previous_status["checkpoint"])
+            import shutil
+            shutil.copy2(os.path.join(save_path, checkpoint_name + "*"), os.path.join(save_path, "tuned"))
 
 
 def _start_tuning():

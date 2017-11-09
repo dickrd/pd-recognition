@@ -70,6 +70,8 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
             finally:
                 print "Final accuracy: {0}.".format(overall_accuracy / step_count)
 
+        return overall_accuracy / step_count
+
 
 def predict(model_path, name_dict, feed_image, feed_image_size, feed_image_channel=3, build=build_cnn):
     from data.common import load_image_data
