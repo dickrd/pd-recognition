@@ -58,12 +58,13 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
                         build=build, report_rate=100,
                         batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
 
-        previous_status = tuning_save.status
+        previous_status = "(previous accuracy is {0} at {1})"\
+            .format(tuning_save.status["best_accuracy"], tuning_save.status["checkpoint"])
         with open(os.path.join(save_path, "checkpoint")) as checkpoint_file:
             checkpoint_name = checkpoint_file.readline().strip().split(':', 1)[1].strip()[1:-1]
         if tuning_save.update(accuracy=accuracy, checkpoint=checkpoint_name):
-            print "Found new best model with accuracy: {0} (previous accuracy is {1} at {2})."\
-                .format(tuning_save.status["best_accuracy"], previous_status["best_accuracy"], previous_status["checkpoint"])
+            print "Found new best model with accuracy: {0} {1}."\
+                .format(tuning_save.status["best_accuracy"], previous_status)
             import glob
             import shutil
             for a_file in glob.glob(os.path.join(save_path, checkpoint_name) + "*"):

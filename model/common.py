@@ -33,7 +33,8 @@ def optimize(cost, save_path="./", report_rate=100, scope=None,
         except tf.errors.OutOfRangeError:
             print "All images used in {0} steps.".format(global_step)
         finally:
-            supervisor.saver.save(sess=sess, save_path=save_path, global_step=global_step)
+            import os
+            supervisor.saver.save(sess=sess, save_path=os.path.join(save_path, "model.ckpt"), global_step=global_step)
             supervisor.request_stop()
 
 
