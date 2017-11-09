@@ -18,12 +18,10 @@ class TuningSave(object):
             self.status = {
                 "best_accuracy": 0,
                 "at_step": 0,
-                "learning_rate": 1e-1,
                 "iteration": 0
             }
 
-    def update(self, accuracy, step, learning_rate):
-        self.status["learning_rate"] = learning_rate
+    def update(self, accuracy, step):
 
         if accuracy > self.status["best_accuracy"]:
             self.status["best_accuracy"] = accuracy
@@ -81,6 +79,7 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
         optimizer = _get_optimizer(logits=y, labels=train_classes,
                                    learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
         accuracy = tf.reduce_mean(tf.cast(tf.equal(y_pred_cls, test_classes), tf.float32))
+
         while not supervisor.should_stop():
             try:
                 _, global_step = sess.run([optimizer, global_step_op], feed_dict=train_feed)
@@ -89,9 +88,15 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
                     print "{0} steps passed\t".format(global_step),
                     test_accuracy = sess.run([accuracy], feed_dict=test_feed)
                     print "accuracy: ", test_accuracy
+
+                    learning_rate /= global_step * 10
+                    optimizer = _get_optimizer(logits=y, labels=train_classes,
+                                               learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
+                    print "Learning rate changed to :", learning_rate
+
                     previous_status = "(previous best is {0} at step {1})"\
                         .format(tuning_save.status["best_accuracy"], tuning_save.status["at_step"])
-                    if tuning_save.update(accuracy=test_accuracy, step=global_step, learning_rate=learning_rate):
+                    if tuning_save.update(accuracy=test_accuracy, step=global_step):
                         print "New best accuracy found: {0} {1}"\
                             .format(tuning_save.status["best_accuracy"], previous_status)
                         accurate_saver.save(sess=sess,
@@ -103,8 +108,7 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
                 print "At step {0}, iteration {1} complete. Current accuracy: {2}, best accuracy: {3} (at step {4})"\
                     .format(global_step, tuning_save.status["iteration"],
                             test_accuracy, tuning_save.status["best_accuracy"], tuning_save.status["at_step"])
-                tuning_save.save()
-            finally:
+
                 tuning_save.next_iteration()
                 train_images, train_classes = TfReader(data_path=train_data_path, size=(image_size, image_size)) \
                     .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
@@ -115,6 +119,8 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
                 optimizer = _get_optimizer(logits=y, labels=train_classes,
                                            learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
                 accuracy = tf.reduce_mean(tf.cast(tf.equal(y_pred_cls, test_classes), tf.float32))
+
+                tuning_save.save()
 
 
 def _get_optimizer(logits, labels, learning_rate, global_step_op, var_to_train):
@@ -175,8 +181,8 @@ def _start_tuning():
         print "Unsupported model type: " + args.model_type
         return
 
-    if not args.data:
-        print "Must specify data path(--data)!"
+    if not args.data or not args.test_data:
+        print "Must specify data path(--data and --test-data)!"
         return
 
     class_count = args.class_count
