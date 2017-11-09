@@ -85,6 +85,7 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
                     test_images, test_classes = TfReader(data_path=test_data_path, size=(image_size, image_size)) \
                         .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
                     test_feed = {x: test_images.eval()}
+                    tf.train.start_queue_runners(sess)
                     accuracy = tf.reduce_mean(tf.cast(tf.equal(y_pred_cls, test_classes), tf.float32))
 
                     overall_accuracy = 0.0
@@ -123,6 +124,7 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
                 train_images, train_classes = TfReader(data_path=train_data_path, size=(image_size, image_size)) \
                     .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
                 train_feed = {x: train_images.eval()}
+                tf.train.start_queue_runners(sess)
                 optimizer = _get_optimizer(logits=y, labels=train_classes,
                                            learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
 
@@ -201,7 +203,7 @@ def _start_tuning():
         print "Must specify number of classes(--class-count) or class label file(--class-label)!"
         return
 
-    tune_cnn(train_data_path=args.test_data, test_data_path=args.data, class_count=class_count, image_size=args.resize,
+    tune_cnn(train_data_path=args.data, test_data_path=args.test_data, class_count=class_count, image_size=args.resize,
              build=build, save_path=args.model_path, scope=scope)
 
 
