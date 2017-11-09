@@ -77,7 +77,6 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
         sess.run(init_op)
         if checkpoint_name:
             accurate_saver.restore(sess=sess, save_path=checkpoint_name)
-        tf.train.start_queue_runners(sess)
 
         global_step = -1
         test_accuracy = -1.0
@@ -85,6 +84,7 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
         tuning_save.next_iteration()
         train_images, train_classes = TfReader(data_path=train_data_path, size=(image_size, image_size)) \
             .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+        tf.train.start_queue_runners(sess)
         train_feed = {x: train_images.eval()}
 
         optimizer = _get_optimizer(logits=y, labels=train_classes,
@@ -97,6 +97,7 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
                     print "{0} steps passed\t".format(global_step),
                     test_images, test_classes = TfReader(data_path=test_data_path, size=(image_size, image_size)) \
                         .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+                    tf.train.start_queue_runners(sess)
                     test_feed = {x: test_images.eval()}
                     accuracy = tf.reduce_mean(tf.cast(tf.equal(y_pred_cls, test_classes), tf.float32))
 
@@ -135,6 +136,7 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
                 tuning_save.next_iteration()
                 train_images, train_classes = TfReader(data_path=train_data_path, size=(image_size, image_size)) \
                     .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+                tf.train.start_queue_runners(sess)
                 train_feed = {x: train_images.eval()}
                 optimizer = _get_optimizer(logits=y, labels=train_classes,
                                            learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
