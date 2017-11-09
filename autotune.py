@@ -61,10 +61,24 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
         var_to_train = None
         print "Tuning all trainable variables."
 
-    # Run supervised session.
+    # Run session.
+    init_op = tf.group(tf.global_variables_initializer(),
+                       tf.local_variables_initializer())
     accurate_saver = tf.train.Saver()
     learning_rate = tuning_save.status["learning_rate"]
+
+    checkpoint_name = None
+    checkpoint_file_name = os.path.join(save_path, "checkpoint")
+    if os.path.exists(checkpoint_file_name):
+        with open(checkpoint_file_name) as checkpoint_file:
+            checkpoint_name = checkpoint_file.readline().strip().split(':', 1)[1].strip()[1:-1]
+        print "Using model: " + checkpoint_name
     with tf.Session() as sess:
+        sess.run(init_op)
+        if checkpoint_name:
+            accurate_saver.restore(sess=sess, save_path=checkpoint_name)
+        tf.train.start_queue_runners(sess)
+
         global_step = -1
         test_accuracy = -1.0
 
@@ -72,7 +86,6 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
         train_images, train_classes = TfReader(data_path=train_data_path, size=(image_size, image_size)) \
             .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
         train_feed = {x: train_images.eval()}
-        tf.train.start_queue_runners(sess)
 
         optimizer = _get_optimizer(logits=y, labels=train_classes,
                                    learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
@@ -85,7 +98,6 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
                     test_images, test_classes = TfReader(data_path=test_data_path, size=(image_size, image_size)) \
                         .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
                     test_feed = {x: test_images.eval()}
-                    tf.train.start_queue_runners(sess)
                     accuracy = tf.reduce_mean(tf.cast(tf.equal(y_pred_cls, test_classes), tf.float32))
 
                     overall_accuracy = 0.0
@@ -124,7 +136,6 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
                 train_images, train_classes = TfReader(data_path=train_data_path, size=(image_size, image_size)) \
                     .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
                 train_feed = {x: train_images.eval()}
-                tf.train.start_queue_runners(sess)
                 optimizer = _get_optimizer(logits=y, labels=train_classes,
                                            learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
 
