@@ -18,10 +18,12 @@ class TuningSave(object):
             self.status = {
                 "best_accuracy": 0,
                 "at_step": 0,
+                "learning_rate": 1e-1,
                 "iteration": 0
             }
 
-    def update(self, accuracy, step):
+    def update(self, accuracy, step, learning_rate):
+        self.status["learning_rate"] = learning_rate
 
         if accuracy > self.status["best_accuracy"]:
             self.status["best_accuracy"] = accuracy
@@ -39,20 +41,18 @@ class TuningSave(object):
 
 def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image_channel=3,
          batch_size=10, capacity=3000, min_after_dequeue=800,
-         build=build_cnn, base_learning_rate=1e-1, tuning_rate=100,
+         build=build_cnn, tuning_rate=100,
          save_path="./", scope=None):
+    tuning_save = TuningSave(save_path=save_path)
     print "Tuning model parameters:\n" \
           "\tmodel save path:\t{0}\n" \
           "\ttuning     rate:\t{1}\n" \
-          "\tbase learning rate:\t{2}".format(save_path, tuning_rate, base_learning_rate)
+          "\ttuning   status:\t{2}".format(save_path, tuning_rate, tuning_save.status)
 
     # Network structure.
     x = tf.placeholder(tf.float32, shape=[batch_size, image_size, image_size, 3], name='image_input')
     y, y_pred_cls = build(input_tensor=x, num_class=class_count, image_size=image_size, image_channel=image_channel)
     global_step_op = tf.Variable(0, trainable=False, name="global_step")
-
-    # Hyper-parameters.
-    learning_rate = base_learning_rate
 
     if scope:
         var_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
@@ -63,8 +63,8 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
 
     # Run supervised session.
     supervisor = tf.train.Supervisor(logdir=save_path)
-    tuning_save = TuningSave(save_path=save_path)
     accurate_saver = tf.train.Saver()
+    learning_rate = tuning_save.status["learning_rate"]
     with supervisor.managed_session() as sess:
         global_step = -1
         test_accuracy = -1.0
@@ -96,7 +96,7 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
 
                     previous_status = "(previous best is {0} at step {1})"\
                         .format(tuning_save.status["best_accuracy"], tuning_save.status["at_step"])
-                    if tuning_save.update(accuracy=test_accuracy, step=global_step):
+                    if tuning_save.update(accuracy=test_accuracy, step=global_step, learning_rate=learning_rate):
                         print "New best accuracy found: {0} {1}"\
                             .format(tuning_save.status["best_accuracy"], previous_status)
                         accurate_saver.save(sess=sess,
