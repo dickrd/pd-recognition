@@ -8,7 +8,8 @@ from model.cnn import train, test
 class TuningSave(object):
 
     def __init__(self, save_path="./"):
-        self._save_path=os.path.join(save_path, "tuning.json")
+        self.model_path = os.path.join(save_path, "tuned")
+        self._save_path=os.path.join(self.model_path, "tuning.json")
 
         if os.path.exists(self._save_path):
             with open(self._save_path, "r") as saved_file:
@@ -19,7 +20,7 @@ class TuningSave(object):
                 "checkpoint": "",
                 "iteration": 0
             }
-            os.mkdir(os.path.join(save_path, "tuned"))
+            os.mkdir(self.model_path)
 
     def update(self, accuracy, checkpoint):
 
@@ -66,7 +67,9 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
             import glob
             import shutil
             for a_file in glob.glob(os.path.join(save_path, checkpoint_name) + "*"):
-                shutil.copy2(a_file, os.path.join(save_path, "tuned"))
+                shutil.copy2(a_file, tuning_save.model_path)
+
+        tuning_save.save()
 
 
 def _start_tuning():
