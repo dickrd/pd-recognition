@@ -62,32 +62,42 @@ def tune_cnn(train_data_path, test_data_path, class_count, image_size=512, image
         print "Tuning all trainable variables."
 
     # Run supervised session.
-    supervisor = tf.train.Supervisor(logdir=save_path)
     accurate_saver = tf.train.Saver()
     learning_rate = tuning_save.status["learning_rate"]
-    with supervisor.managed_session() as sess:
+    with tf.Session() as sess:
         global_step = -1
         test_accuracy = -1.0
 
         tuning_save.next_iteration()
         train_images, train_classes = TfReader(data_path=train_data_path, size=(image_size, image_size)) \
             .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
-        test_images, test_classes = TfReader(data_path=test_data_path, size=(image_size, image_size)) \
-            .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
         train_feed = {x: train_images}
-        test_feed = {x: test_images}
+        tf.train.start_queue_runners(sess)
+
         optimizer = _get_optimizer(logits=y, labels=train_classes,
                                    learning_rate=learning_rate, global_step_op=global_step_op, var_to_train=var_to_train)
-        accuracy = tf.reduce_mean(tf.cast(tf.equal(y_pred_cls, test_classes), tf.float32))
-
-        while not supervisor.should_stop():
+        while True:
             try:
                 _, global_step = sess.run([optimizer, global_step_op], feed_dict=train_feed)
 
                 if global_step % tuning_rate == 0:
                     print "{0} steps passed\t".format(global_step),
-                    test_accuracy = sess.run([accuracy], feed_dict=test_feed)
-                    print "accuracy: ", test_accuracy
+                    test_images, test_classes = TfReader(data_path=test_data_path, size=(image_size, image_size)) \
+                        .read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+                    test_feed = {x: test_images}
+                    accuracy = tf.reduce_mean(tf.cast(tf.equal(y_pred_cls, test_classes), tf.float32))
+
+                    overall_accuracy = 0.0
+                    step_count = 0.0
+                    try:
+                        while True:
+                            step_count += 1.0
+                            current_accuracy = sess.run([accuracy], feed_dict=test_feed)
+                            overall_accuracy += current_accuracy
+                    except tf.errors.OutOfRangeError:
+                        pass
+                    finally:
+                        print "accuracy: {0}".format(overall_accuracy / step_count)
 
                     learning_rate /= global_step * 10
                     optimizer = _get_optimizer(logits=y, labels=train_classes,
