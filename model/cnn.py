@@ -206,8 +206,8 @@ def _use_model():
 
         with open(args.class_label, 'r') as label_file:
             label_names = json.load(label_file)
-            predict(model_path=args.model_path, name_dict=label_names, build=build,
-                    feed_image=args.image, feed_image_size=args.resize)
+            predict(model_path=args.model_path, name_dict=label_names, feed_image=args.image, build=build,
+                    feed_image_size=args.resize)
     elif args.action == "auto":
         from model.autotune import tune_cnn
         if not args.test_data:
@@ -224,8 +224,8 @@ def _use_model():
             print "Must specify number of classes(--class-count) or class label file(--class-label)!"
             return
 
-        tune_cnn(train_data_path=args.data, test_data_path=args.test_data, class_count=class_count, image_size=args.resize,
-                 build=build, save_path=args.model_path, scope=scope)
+        tune_cnn(save_path=args.model_path, train_data_path=args.data, test_data_path=args.test_data, class_count=class_count, build=build, scope=scope,
+                 image_size=args.resize)
 
     else:
         print "Unsupported action: " + args.action
