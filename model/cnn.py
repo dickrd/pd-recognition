@@ -3,7 +3,8 @@ import tensorflow as tf
 from model.common import build_cnn, optimize
 
 
-def train(model_path, train_data_path, class_count, image_size, image_channel=3, build=build_cnn, scope=None,
+def train(model_path, train_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
+          scope=None, learning_rate=1e-4,
           num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800):
     from data.common import TfReader
     with tf.Graph().as_default():
@@ -25,8 +26,8 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
         # Calculate average cost across all images.
         cost = tf.reduce_mean(cross_entropy)
 
-        optimize(cost=cost,
-                 scope=scope, save_path=model_path)
+        optimize(cost=cost, save_path=model_path, report_rate=report_rate,
+                 scope=scope, learning_rate=learning_rate)
 
 
 def test(model_path, test_data_path, class_count, image_size, image_channel=3, report_rate=10, build=build_cnn,
@@ -111,11 +112,13 @@ def _use_model():
     # Parse commandline arguments.
     parser = argparse.ArgumentParser(description="cnn classify model util.")
     parser.add_argument("action",
-                        help="action to perform, including: train, test, predict")
+                        help="action to perform, including: auto, train, test, predict")
     parser.add_argument("-i", "--image",
                         help="path to unclassified image")
     parser.add_argument("-d", "--data", nargs='*',
                         help="path to formatted tfrecords data")
+    parser.add_argument("-v", "--test-data", nargs='*',
+                        help="path to formatted tfrecords test data (used with auto-tune)")
     parser.add_argument("-l", "--class-label",
                         help="path to json file that contains a map of readable name to class label.")
     parser.add_argument("-t", "--model-type", default="general",
@@ -183,10 +186,12 @@ def _use_model():
         if class_count == 0:
             print "Must specify number of classes(--class-count) or class label file(--class-label)!"
             return
+
         test(model_path=args.model_path, test_data_path=args.data, class_count=class_count, build=build,
              image_size=args.resize)
 
     elif args.action == "predict":
+        import json
         if not args.image:
             print "Must specify image to predict(--image)!"
             return
@@ -198,11 +203,30 @@ def _use_model():
         if not args.class_label:
             print "Must specify class label file(--class-label)!"
             return
-        import json
+
         with open(args.class_label, 'r') as label_file:
             label_names = json.load(label_file)
             predict(model_path=args.model_path, name_dict=label_names, build=build,
                     feed_image=args.image, feed_image_size=args.resize)
+    elif args.action == "auto":
+        from model.autotune import tune_cnn
+        if not args.test_data:
+            print "Must specify test data path(--test-data)!"
+
+        class_count = args.class_count
+        if args.class_label:
+            import json
+            with open(args.class_label, 'r') as label_file:
+                label_names = json.load(label_file)
+                class_count = len(label_names)
+
+        if class_count == 0:
+            print "Must specify number of classes(--class-count) or class label file(--class-label)!"
+            return
+
+        tune_cnn(train_data_path=args.data, test_data_path=args.test_data, class_count=class_count, image_size=args.resize,
+                 build=build, save_path=args.model_path, scope=scope)
+
     else:
         print "Unsupported action: " + args.action
 

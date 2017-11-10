@@ -1,9 +1,8 @@
 import tensorflow as tf
 
 
-def optimize(cost, save_path="./", report_rate=100, scope=None,
-             learning_rate=1e-4):
-
+def optimize(cost, save_path, report_rate=100,
+             scope=None, learning_rate=1e-4):
     print "Learning model parameters:\n" \
           "\tmodel save path:\t{0}\n" \
           "\treport     rate:\t{1}\n" \

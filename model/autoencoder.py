@@ -108,7 +108,8 @@ def build_autoencoder(x_in, corruption=False):
     return y, z
 
 
-def train_autoencoder(model_path, train_data_path, image_size,
+def train_autoencoder(model_path, train_data_path, image_size, report_rate=100,
+                      learning_rate=1e-4,
                       num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800):
     from data.common import TfReader
     with tf.Graph().as_default():
@@ -121,8 +122,8 @@ def train_autoencoder(model_path, train_data_path, image_size,
 
         # Cost function measures pixel-wise difference
         cost = tf.reduce_sum(tf.square(y - images))
-        optimize(cost=cost,
-                 scope=None, save_path=model_path)
+        optimize(cost=cost, save_path=model_path, report_rate=report_rate,
+                 scope=None, learning_rate=learning_rate)
 
 def test_autoencoder(model_path, test_data_path, image_size, report_rate=10,
                      batch_size=100, capacity=3000, min_after_dequeue=800):
