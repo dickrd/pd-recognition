@@ -25,7 +25,7 @@ def main():
     parser.add_argument("-l", "--limit", type=int,
                         help="limit data set size of every label to a fixed number")
     parser.add_argument("-t", "--label-index", type=int, default=0,
-                        help="which directory in path will be label, count backwards")
+                        help="which directory in path will be label")
     parser.add_argument("-o", "--output-path", default="./",
                         help="path to store result tfrecords")
     parser.add_argument("-r", "--random-chance", default=[], type=float, nargs='*',
