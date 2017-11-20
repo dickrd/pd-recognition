@@ -115,9 +115,18 @@ def load_image_data(image_file_path,
     return image
 
 
-def generate_name(image_file_path, pattern, index=1):
-    matches = pattern.match(image_file_path)
-    if matches:
-        return matches.group(index)
+def generate_name(image_file_path, index=0):
+    import os
+    dirname = image_file_path
+    path_split = []
+    while True:
+        dirname, leaf = os.path.split(dirname)
+        if leaf:
+            path_split = [leaf] + path_split
+        else:
+            break
+
+    if len(path_split) > index:
+        return path_split[index]
     else:
         return None

@@ -14,7 +14,6 @@ def main():
     :return: None 
     """
     import argparse
-    import re
     import random
     import json
 
@@ -25,8 +24,8 @@ def main():
                         help="path to image files")
     parser.add_argument("-l", "--limit", type=int,
                         help="limit data set size of every label to a fixed number")
-    parser.add_argument("-t", "--label-type", default="directory",
-                        help="which type of label to use: name of the directory containing the image file(directory), or name of its parent directory(parent)")
+    parser.add_argument("-t", "--label-index", type=int, default=0,
+                        help="which directory in path will be label, count backwards")
     parser.add_argument("-o", "--output-path", default="./",
                         help="path to store result tfrecords")
     parser.add_argument("-r", "--random-chance", default=[], type=float, nargs='*',
@@ -72,13 +71,7 @@ def main():
 
                     img = load_image_data(current_file_path,
                                           resize=(args.resize, args.resize))
-                    if args.label_type == "directory":
-                        name = generate_name(current_file_path, re.compile(r".*/(.*)/"))
-                    elif args.label_type == "parent":
-                        name = generate_name(current_file_path, re.compile(r".*/(.*)/.*/"))
-                    else:
-                        print "Unsupported label generating type: ", args.label_type
-                        return
+                    name = generate_name(current_file_path, index=args.label_index)
 
                     if not name:
                         continue
