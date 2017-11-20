@@ -117,16 +117,22 @@ def load_image_data(image_file_path,
 
 def generate_name(image_file_path, index=0):
     import os
-    dirname = image_file_path
-    path_split = []
+    head, tail = os.path.split(image_file_path)
+    if tail:
+        path_split = [tail]
+    else:
+        path_split = []
+
+    a_path = head
     while True:
-        dirname, leaf = os.path.split(dirname)
-        if leaf:
-            path_split = [leaf] + path_split
+        head, tail = os.path.split(a_path)
+        if tail:
+            path_split = [tail] + path_split
+            a_path = head
         else:
             break
 
-    if len(path_split) > index:
+    try:
         return path_split[index]
-    else:
+    except IndexError:
         return None
