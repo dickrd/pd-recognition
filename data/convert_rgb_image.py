@@ -1,6 +1,8 @@
 import os
 
-from data.common import load_image_data, generate_name, AutoList, TfWriter
+from data.common import AutoList, TfWriter
+from data.image_loading import load_compcar_with_crop, load_image_data
+from data.name_generation import generate_name_from_path
 
 
 def main():
@@ -24,7 +26,7 @@ def main():
                         help="path to image files")
     parser.add_argument("-l", "--limit", type=int,
                         help="limit data set size of every label to a fixed number")
-    parser.add_argument("-t", "--label-index", type=int, default=0,
+    parser.add_argument("-p", "--label-index", type=int, default=-2,
                         help="which directory in path will be label")
     parser.add_argument("-o", "--output-path", default="./",
                         help="path to store result tfrecords")
@@ -32,11 +34,22 @@ def main():
                         help="chance to split an example to a new tfrecord file")
     parser.add_argument("-s", "--resize", default=512, type=int,
                         help="size to resize image files to")
+    parser.add_argument("--crop-compcar", action="store_true",
+                        help="crop compcar full images")
     args = parser.parse_args()
 
     if not args.input_path:
         print "Must specify image paths(--image-path)!"
         return
+
+    if args.crop_compcar:
+        import re
+        label_path = re.sub(r"/image/?", r"/label/", args.input_path)
+        if os.path.isdir(label_path):
+            print "Crop compcar full images using label: " + label_path
+        else:
+            print "Error reading label directory: " + label_path
+            return
 
     print "Image will be resized to: " + str(args.resize) + "x" + str(args.resize)
 
@@ -69,9 +82,12 @@ def main():
                 try:
                     current_file_path = os.path.join(path, a_file)
 
-                    img = load_image_data(current_file_path,
-                                          resize=(args.resize, args.resize))
-                    name = generate_name(current_file_path, index=args.label_index)
+                    if args.crop_compcar:
+                        img = load_compcar_with_crop(current_file_path, resize=(args.resize, args.resize))
+                    else:
+                        img = load_image_data(current_file_path, resize=(args.resize, args.resize))
+
+                    name = generate_name_from_path(current_file_path, index=args.label_index)
 
                     if not name:
                         continue
