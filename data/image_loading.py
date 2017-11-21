@@ -56,19 +56,22 @@ def load_car_json_data(car_json_path, resize=(512, 512),
     with open(car_json_path, 'r') as json_data:
         j = json.load(json_data)
 
-        # Label of this image.
-        label = j["brand"].split("#")[1]
+        # Name of this image.
+        name = j["brand"].split("#")[1]
 
         if name_filter:
             import re
 
+            # Full qualified name of this image.
             model = j["brand"].lower()
             pattern = re.sub(r"\(.+\)", "", model).strip()
 
+            # Search in name filter.
             found = False
-            for item in name_filter:
-                target = re.sub(r"\(.+\)", "", item.lower()).strip()
-                if target in pattern:
+            for name in name_filter:
+                approved_name = re.sub(r"\(.+\)", "", name.lower()).strip()
+                # If the name of this image is approved.
+                if approved_name in pattern:
                     found = True
                     print "Found: " + model.encode("utf-8")
                     break
@@ -92,4 +95,4 @@ def load_car_json_data(car_json_path, resize=(512, 512),
         # Resize image.
         image = image.resize(resize, Image.LANCZOS)
 
-    return image, label
+    return image, name
