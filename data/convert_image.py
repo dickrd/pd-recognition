@@ -8,10 +8,32 @@ from data.name_generation import generate_name_from_path
 
 def convert_image(input_path, label_index, resize,
                   limit, name_count, random_chance,
-                  load_image, packed, crop_percentage, name_filter,
-                  name_wrote_count, file_wrote_count,
-                  result_files, writers):
+                  output_path, dry_run,
+                  load_image, packed, crop_percentage, name_filter):
     import random
+
+    if dry_run:
+        from data.common import DummyWriter as TfWriter
+        print "Using dummy writer that writes nothing."
+    else:
+        from data.common import TfWriter
+
+    # Vars for write images to different files and count.
+    # File path list of tfrecord files.
+    result_files = [os.path.join(output_path, "train.tfrecords")]
+    # Writers list.
+    writers = [TfWriter(result_files[0])]
+    # Count of each tfrecord file.
+    file_wrote_count = [0]
+    # Count for each name.
+    name_wrote_count = AutoList()
+
+    print "Default output file: " + result_files[0]
+    for index, item in enumerate(random_chance):
+        result_files.append(os.path.join(output_path, "test_" + str(index) + ".tfrecords"))
+        writers.append(TfWriter(result_files[index + 1]))
+        file_wrote_count.append(0)
+        print "Chance for example to file " + result_files[index + 1] + ": " + str(item)
 
     # Name to label conversion.
     name_labels = {}
@@ -72,7 +94,16 @@ def convert_image(input_path, label_index, resize,
             for index, file_name in enumerate(result_files):
                 print "Current examples in " + file_name + ": " + str(file_wrote_count[index])
 
-    return name_labels
+    print "All images processed."
+
+    # Close the writers.
+    for writer in writers:
+        writer.close()
+    # Save name label conversion.
+    with open(os.path.join(output_path, "name_labels.json"), 'w') as label_file:
+        label_file.write(json.dumps(name_labels))
+
+    return name_wrote_count
 
 
 def print_dataset_summary(name_count, write_path=None):
@@ -189,43 +220,11 @@ def _main():
             print "."
 
     print "Image will be resized to: " + str(args.resize) + "x" + str(args.resize)
-    if args.dry_run:
-        from data.common import DummyWriter as TfWriter
-        print "Using dummy writer that writes nothing."
-    else:
-        from data.common import TfWriter
 
-    # Vars for write images to different files and count.
-    # File path list of tfrecord files.
-    result_files = [os.path.join(args.output_path, "train.tfrecords")]
-    # Writers list.
-    writers = [TfWriter(result_files[0])]
-    # Count of each tfrecord file.
-    count = [0]
-    # Count for each name.
-    name_wrote_count = AutoList()
-
-    print "Default output file: " + result_files[0]
-    for index, item in enumerate(args.random_chance):
-        result_files.append(os.path.join(args.output_path, "test_" + str(index) + ".tfrecords"))
-        writers.append(TfWriter(result_files[index + 1]))
-        count.append(0)
-        print "Chance for example to file " + result_files[index + 1] + ": " + str(item)
-
-    name_labels = convert_image(input_path=args.input_path, label_index=args.label_index, resize=args.resize,
+    name_wrote_count = convert_image(input_path=args.input_path, label_index=args.label_index, resize=args.resize,
                                 limit=args.limit, name_count=name_count, random_chance=args.random_chance,
-                                load_image=load_image, packed=packed, crop_percentage=args.crop, name_filter=name_filter,
-                                name_wrote_count=name_wrote_count, file_wrote_count=count,
-                                result_files=result_files, writers=writers)
-
-    print "All images processed."
-
-    # Close the writers.
-    for writer in writers:
-        writer.close()
-    # Save name label conversion.
-    with open(os.path.join(args.output_path, "name_labels.json"), 'w') as label_file:
-        label_file.write(json.dumps(name_labels))
+                                output_path=args.output_path, dry_run=args.dry_run,
+                                load_image=load_image, packed=packed, crop_percentage=args.crop, name_filter=name_filter)
 
     print_dataset_summary(dict(name_wrote_count))
     print "Done."
