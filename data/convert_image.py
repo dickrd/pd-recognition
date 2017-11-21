@@ -106,14 +106,14 @@ def convert_image(input_path, label_index, resize,
     return name_wrote_count
 
 
-def print_dataset_summary(name_count, write_path=None):
+def print_dataset_summary(name_wrote_count, write_path=None):
     if write_path:
         # Write results.
         with open(os.path.join(write_path, "name_count.json"), 'w') as count_file:
-            count_file.write(json.dumps(name_count))
+            count_file.write(json.dumps(name_wrote_count))
 
     # Print statistics.
-    sorted_kv = sorted(name_count.items(), key=lambda x: x[1])
+    sorted_kv = sorted(name_wrote_count.items(), key=lambda x: x[1])
     for item in sorted_kv:
         print "({0}, {1})\t".format(item[0].encode("utf-8"), item[1]),
     print "\n",
@@ -202,7 +202,7 @@ def _main():
             name_filter = set()
             for a_name in args.name_filter[1:]:
                 name_filter.update(filter_category[a_name])
-            print "Categories that will be added: ",
+            print "Names that will be added: ",
             print name_filter
         else:
             print "Unexpected name filter syntax: " + args.name_filter
