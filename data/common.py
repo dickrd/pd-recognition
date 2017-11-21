@@ -15,6 +15,16 @@ class AutoList(list):
             return 0
 
 
+# noinspection PyUnusedLocal
+class DummyWriter(object):
+    def __init__(self, write_path):
+        pass
+    def close(self):
+        pass
+    def write(self, image, label):
+        pass
+
+
 class TfWriter(object):
     def __init__(self, write_path):
         self.writer = tf.python_io.TFRecordWriter(write_path)

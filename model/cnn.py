@@ -75,9 +75,9 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
 
 
 def predict(model_path, name_dict, feed_image, feed_image_size, feed_image_channel=3, build=build_cnn):
-    from data.common import load_image_data
+    from data.image_loading import load_image_data
     print "Loading image from {0} with size: {1}x{1}.".format(feed_image, feed_image_size)
-    image = load_image_data(image_file_path=feed_image,
+    image = load_image_data(image_path=feed_image,
                             resize=(feed_image_size, feed_image_size))
     with tf.Graph().as_default():
         # Input placeholder.
@@ -122,7 +122,7 @@ def _use_model():
     parser.add_argument("-l", "--class-label",
                         help="path to json file that contains a map of readable name to class label.")
     parser.add_argument("-t", "--model-type", default="general",
-                        help="which type of model to use(general, autoencoder, googlecar, vggface, resnet)")
+                        help="which type of model to use (general, autoencoder, googlecar, vggface, resnet)")
     parser.add_argument("-m", "--model-path", default="./",
                         help="path to stored model")
     parser.add_argument("-n", "--class-count", default=0, type=int,
