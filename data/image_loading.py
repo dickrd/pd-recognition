@@ -17,7 +17,7 @@ def load_compcar_with_crop(image_path, resize=(512, 512)):
         label_file.readline()
         line = label_file.readline()
 
-        x1, y1, x2, y2 = line.strip().split(" ")
+        x1, y1, x2, y2 = map(int, line.strip().split(" "))
     # Crop image.
     image = image.crop((x1, y1, x2, y2))
 
