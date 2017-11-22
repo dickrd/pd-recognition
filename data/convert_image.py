@@ -37,6 +37,7 @@ def convert_image(input_path, label_index, resize,
 
     # Name to label conversion.
     name_labels = {}
+    img = None
     for directory in input_path:
         # Walk through given path, to find car images.
         for path, subdirs, files in os.walk(directory):
@@ -93,6 +94,11 @@ def convert_image(input_path, label_index, resize,
             # Count example for every directory read.
             for index, file_name in enumerate(result_files):
                 print "Current examples in " + file_name + ": " + str(file_wrote_count[index])
+
+    if img:
+        sample_path = os.path.join(output_path, "sample.jpg")
+        img.save(sample_path)
+        print "Sample image in " + sample_path
 
     print "All images processed."
 
