@@ -18,7 +18,6 @@ class TuningSave(object):
             self.status = {
                 "best_accuracy": 0,
                 "checkpoint": "no model",
-                "learning_rate": 1e-1,
                 "iteration": 0
             }
             os.mkdir(self.model_path)
@@ -29,9 +28,6 @@ class TuningSave(object):
             self.status["checkpoint"] = checkpoint
             return True
         return False
-
-    def decay(self):
-        self.status["learning_rate"] /= 10
 
     def next_iteration(self):
         self.status["iteration"] += 1
@@ -53,7 +49,7 @@ def tune_cnn(save_path, train_data_path, test_data_path, class_count, image_size
         tuning_save.next_iteration()
         print "Start training: ", tuning_save.status["iteration"]
         train(model_path=save_path, train_data_path=train_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel, build=build,
-              scope=scope, learning_rate=tuning_save.status["learning_rate"],
+              scope=scope,
               num_epoch=1, batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
         print "Start testing: ", tuning_save.status["iteration"]
         accuracy = test(model_path=save_path, test_data_path=test_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel, report_rate=100, build=build,
@@ -70,7 +66,5 @@ def tune_cnn(save_path, train_data_path, test_data_path, class_count, image_size
             import shutil
             for a_file in glob.glob(os.path.join(save_path, checkpoint_name) + "*"):
                 shutil.copy2(a_file, tuning_save.model_path)
-        else:
-            tuning_save.decay()
 
         tuning_save.save()
