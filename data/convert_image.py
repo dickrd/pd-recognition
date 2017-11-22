@@ -237,7 +237,7 @@ def _main():
                                 output_path=args.output_path, dry_run=args.dry_run,
                                 load_image=load_image, packed=packed, crop_percentage=args.crop, name_filter=name_filter)
 
-    print_dataset_summary(name_wrote_count)
+    print_dataset_summary(name_wrote_count, write_path=args.output_path)
     print "Done."
 
 
