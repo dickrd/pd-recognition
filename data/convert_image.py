@@ -121,17 +121,22 @@ def print_dataset_summary(name_wrote_count, write_path=None):
             count_file.write(json.dumps(name_wrote_count))
 
     # Print statistics.
+    print "Statics:"
     sorted_kv = sorted(name_wrote_count.items(), key=lambda x: x[1])
+    count = 0
     for item in sorted_kv:
-        print "({0}, {1})\t".format(item[0].encode("utf-8"), item[1]),
-    print "\n",
+        print "\t({0}, {1})".format(item[0].encode("utf-8"), item[1]),
+        count += 1
+        if count % 6 == 0:
+            print ""
+    print ""
 
     # Print summary.
     mid_kv = sorted_kv[len(sorted_kv)/2]
     small_kv = sorted_kv[0]
     big_kv = sorted_kv[-1]
-    print "Middle:\t({0}, {1})".format(mid_kv[0].encode("utf-8"), mid_kv[1])
-    print "Largest:\t({0}, {1})".format(big_kv[0].encode("utf-8"), big_kv[1])
+    print "Middle:  \t({0}, {1})".format(mid_kv[0].encode("utf-8"), mid_kv[1])
+    print "Largest: \t({0}, {1})".format(big_kv[0].encode("utf-8"), big_kv[1])
     print "Smallest:\t({0}, {1})".format(small_kv[0].encode("utf-8"), small_kv[1])
 
 
