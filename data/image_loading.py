@@ -1,13 +1,17 @@
 from PIL import Image
 
-def load_compcar_with_crop(image_path, resize=(512, 512)):
-    import re
 
+def get_label_path_of_compcar(image_path):
+    import re
+    return re.sub(r"(.*)/image(/|$)", r"\1/label\2", image_path)
+
+
+def load_compcar_with_crop(image_path, resize=(512, 512)):
     # Load image data.
     image = Image.open(image_path).convert(mode="RGB")
 
     # Read label.
-    label_path = re.sub(r"/image/?", r"/label/", image_path)
+    label_path = get_label_path_of_compcar(image_path)
     with open(label_path, 'r') as label_file:
         label_file.readline()
         label_file.readline()

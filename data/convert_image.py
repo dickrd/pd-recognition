@@ -2,7 +2,7 @@ import json
 import os
 
 from data.common import AutoList
-from data.image_loading import load_compcar_with_crop, load_image_data, load_car_json_data
+from data.image_loading import load_compcar_with_crop, load_image_data, load_car_json_data, get_label_path_of_compcar
 from data.name_generation import generate_name_from_path
 
 
@@ -177,15 +177,18 @@ def _main():
     if args.pre_process == "general":
         load_image = load_image_data
     elif args.pre_process == "compcar":
-        import re
-        label_path = re.sub(r"/image/?", r"/label/", args.input_path)
+        label_path = []
+        for a_input_path in args.input_path:
+            a_label_path = get_label_path_of_compcar(a_input_path)
+            if os.path.isdir(a_label_path):
+                label_path.append(a_label_path)
+            else:
+                print "No label directories in: " + a_label_path
+                return
 
-        if os.path.isdir(label_path):
-            print "Crop compcar full images using label: " + label_path
-            load_image = load_compcar_with_crop
-        else:
-            print "Error reading label directory: " + label_path
-            return
+        print "Crop compcar full images using labels in: ",
+        print label_path
+        load_image = load_compcar_with_crop
     elif args.pre_process == "jsoncar":
         load_image = load_car_json_data
         packed = True
