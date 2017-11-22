@@ -1,7 +1,6 @@
 import json
 import os
 
-from data.common import AutoList
 from data.image_loading import load_compcar_with_crop, load_image_data, load_car_json_data, get_label_path_of_compcar
 from data.name_generation import generate_name_from_path
 
@@ -26,7 +25,7 @@ def convert_image(input_path, label_index, resize,
     # Count of each tfrecord file.
     file_wrote_count = [0]
     # Count for each name.
-    name_wrote_count = AutoList()
+    name_wrote_count = {}
 
     print "Default output file: " + result_files[0]
     for index, item in enumerate(random_chance):
@@ -68,8 +67,11 @@ def convert_image(input_path, label_index, resize,
                     else:
                         label = name_labels[name]
 
+                    # Count name wrote times.
+                    if name not in name_wrote_count:
+                        name_wrote_count[name] = 0
                     # Skip extra images.
-                    if limit and name_wrote_count[label] > limit:
+                    elif limit and name_wrote_count[name] >= limit:
                         continue
 
                     # If this car image has been write to a tfrecord file.
@@ -87,7 +89,7 @@ def convert_image(input_path, label_index, resize,
                         writers[0].write(img, label)
                         file_wrote_count[0] += 1
 
-                    name_wrote_count[label] += 1
+                    name_wrote_count[name] += 1
                 except Exception as e:
                     print "Error reading " + a_file + ": " + repr(e)
 
@@ -235,7 +237,7 @@ def _main():
                                 output_path=args.output_path, dry_run=args.dry_run,
                                 load_image=load_image, packed=packed, crop_percentage=args.crop, name_filter=name_filter)
 
-    print_dataset_summary(dict(name_wrote_count))
+    print_dataset_summary(name_wrote_count)
     print "Done."
 
 
