@@ -7,9 +7,9 @@ class ConfusionMatrix(object):
         self.matrix = np.zeros(shape=(class_count, class_count))
 
     def update(self, predictions, truth):
-        if not (len(predictions) == len(truth) == len(self.matrix)):
-            print "Incompatible length: predictions({0}), truth({1}), matrix({2})"\
-                .format(len(predictions), len(truth), len(self.matrix))
+        if not (len(predictions) == len(truth)):
+            print "Incompatible length: predictions({0}), truth({1})"\
+                .format(len(predictions), len(truth))
             return
 
         for i in range(len(predictions)):
