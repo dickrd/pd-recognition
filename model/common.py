@@ -1,6 +1,20 @@
 import tensorflow as tf
 
 
+class ConfusionMatrix(object):
+    def __init__(self, class_count):
+        self.matrix = tf.np.zeros(shape=(class_count, class_count))
+
+    def update(self, predictions, truth):
+        if not (len(predictions) == len(truth) == len(self.matrix)):
+            print "Incompatible length: predictions({0}), truth({1}), matrix({2})"\
+                .format(len(predictions), len(truth), len(self.matrix))
+            return
+
+        for i in range(len(predictions)):
+            self.matrix[truth[i]][predictions[i]] += 1
+
+
 def optimize(cost, save_path, report_rate=100,
              scope=None, learning_rate=1e-4):
     print "Learning model parameters:\n" \

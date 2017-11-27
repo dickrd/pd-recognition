@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from model.common import build_cnn, optimize
+from model.common import build_cnn, optimize, ConfusionMatrix
 
 
 def train(model_path, train_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
@@ -35,6 +35,8 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
     from data.common import TfReader
     import os
     with tf.Graph().as_default():
+        confusion_matrix = ConfusionMatrix(class_count=class_count)
+
         # Read test data.
         train_data = TfReader(data_path=test_data_path, size=(image_size, image_size))
         images, classes = train_data.read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
@@ -60,8 +62,9 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
             try:
                 while True:
                     step_count += 1.0
-                    predictions, current_accuracy = sess.run([y_pred_cls, accuracy])
+                    predictions, truth, current_accuracy = sess.run([y_pred_cls, classes, accuracy])
                     overall_accuracy += current_accuracy
+                    confusion_matrix.update(predictions=predictions, truth=truth)
                     if step_count % report_rate == 0:
                         print "{0} steps passed with accuracy of {1}/{2}."\
                             .format(step_count, current_accuracy, overall_accuracy / step_count)
@@ -70,6 +73,8 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
                 print "All images used in {0} steps.".format(step_count)
             finally:
                 print "Final accuracy: {0}.".format(overall_accuracy / step_count)
+                print "Confusion matrix:"
+                print confusion_matrix.matrix
 
         return overall_accuracy / step_count
 
