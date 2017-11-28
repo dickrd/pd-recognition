@@ -51,7 +51,10 @@ def tune_cnn(save_path, train_data_path, test_data_path, class_count, image_size
         train(model_path=save_path, train_data_path=train_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel, build=build,
               scope=scope,
               num_epoch=1, batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
-        print "Start testing: ", tuning_save.status["iteration"]
+        print "Start testing on training set: ", tuning_save.status["iteration"]
+        test(model_path=save_path, test_data_path=train_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel, report_rate=100, build=build,
+             batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+        print "Start testing on testing set: ", tuning_save.status["iteration"]
         accuracy = test(model_path=save_path, test_data_path=test_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel, report_rate=100, build=build,
                         batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
 
