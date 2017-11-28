@@ -4,7 +4,7 @@ import numpy as np
 
 class ConfusionMatrix(object):
     def __init__(self, class_count):
-        self.matrix = np.zeros(shape=(class_count, class_count))
+        self.matrix = np.zeros(shape=(class_count, class_count), dtype=np.int)
 
     def update(self, predictions, truth):
         if not (len(predictions) == len(truth)):
