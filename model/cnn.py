@@ -123,15 +123,13 @@ def _use_model():
     parser.add_argument("-d", "--data", nargs='*',
                         help="path to formatted tfrecords data")
     parser.add_argument("-v", "--test-data", nargs='*',
-                        help="path to formatted tfrecords test data (used with auto-tune)")
+                        help="path to formatted tfrecords test data (used only with auto action)")
     parser.add_argument("-l", "--class-label",
                         help="path to json file that contains a map of readable name to class label.")
     parser.add_argument("-t", "--model-type", default="general",
                         help="which type of model to use (general, autoencoder, googlecar, vggface, resnet)")
     parser.add_argument("-m", "--model-path", default="./",
                         help="path to stored model")
-    parser.add_argument("-n", "--class-count", default=0, type=int,
-                        help="number of classes")
     parser.add_argument("-s", "--resize", default=512, type=int,
                         help="resized image size")
     args = parser.parse_args()
@@ -162,16 +160,14 @@ def _use_model():
             print "Must specify data path(--data)!"
             return
 
-        class_count = args.class_count
-        if args.class_label:
-            import json
-            with open(args.class_label, 'r') as label_file:
-                label_names = json.load(label_file)
-                class_count = len(label_names)
-
-        if class_count == 0:
-            print "Must specify number of classes(--class-count) or class label file(--class-label)!"
+        if not args.class_label:
+            print "Must specify class label file(--class-label)!"
             return
+
+        import json
+        with open(args.class_label, 'r') as label_file:
+            label_names = json.load(label_file)
+            class_count = len(label_names)
 
         train(model_path=args.model_path, train_data_path=args.data, class_count=class_count, build=build, scope=scope,
               image_size=args.resize)
@@ -181,16 +177,14 @@ def _use_model():
             print "Must specify data path(--data)!"
             return
 
-        class_count = args.class_count
-        if args.class_label:
-            import json
-            with open(args.class_label, 'r') as label_file:
-                label_names = json.load(label_file)
-                class_count = len(label_names)
-
-        if class_count == 0:
-            print "Must specify number of classes(--class-count) or class label file(--class-label)!"
+        if not args.class_label:
+            print "Must specify class label file(--class-label)!"
             return
+
+        import json
+        with open(args.class_label, 'r') as label_file:
+            label_names = json.load(label_file)
+            class_count = len(label_names)
 
         test(model_path=args.model_path, test_data_path=args.data, class_count=class_count, build=build,
              image_size=args.resize)
@@ -213,21 +207,20 @@ def _use_model():
             label_names = json.load(label_file)
             predict(model_path=args.model_path, name_dict=label_names, feed_image=args.image, build=build,
                     feed_image_size=args.resize)
+
     elif args.action == "auto":
         from model.autotune import tune_cnn
         if not args.test_data:
             print "Must specify test data path(--test-data)!"
 
-        class_count = args.class_count
-        if args.class_label:
-            import json
-            with open(args.class_label, 'r') as label_file:
-                label_names = json.load(label_file)
-                class_count = len(label_names)
-
-        if class_count == 0:
-            print "Must specify number of classes(--class-count) or class label file(--class-label)!"
+        if not args.class_label:
+            print "Must specify class label file(--class-label)!"
             return
+
+        import json
+        with open(args.class_label, 'r') as label_file:
+            label_names = json.load(label_file)
+            class_count = len(label_names)
 
         tune_cnn(save_path=args.model_path, train_data_path=args.data, test_data_path=args.test_data, class_count=class_count, build=build, scope=scope,
                  image_size=args.resize)
