@@ -102,18 +102,25 @@ def load_car_json_data(car_json_path, resize=(512, 512),
 
     return image, name
 
-def load_car_color_json_data(car_json_path,resize=(512,512),crop_percentage=1.0, name_filter=None):
+def load_car_color_json_data(car_json_path, resize=(512,512),
+                             crop_percentage=1.0, name_filter=None):
     """
     load car json file.
     ：param car_json_path: Path to a car json file.
     : param resize: Resize image to this size.
     : return: PIL.Image object of the car's image and the label(car color).
     """
+
+    if name_filter is not None:
+        raise NotImplementedError("Does not support filter")
+    if crop_percentage != 1.0:
+        raise NotImplementedError("Does not support crop")
+
     import json
     import base64
     import io
     from PIL import Image
-    ColorList = [u"白",u"灰",u"黄",u"粉",u"红",u"紫",u"绿",u"蓝",u"棕",u"黑"]
+    color_list = [u"白", u"灰", u"黄", u"粉", u"红", u"紫", u"绿", u"蓝", u"棕", u"黑"]
     with open(car_json_path,'r') as json_data:
         j = json.load(json_data)
         #Color of this image
@@ -121,14 +128,14 @@ def load_car_color_json_data(car_json_path,resize=(512,512),crop_percentage=1.0,
         if color:
             color = color.split("#")[0]
             #color = color.decode('utf-8')
-            if color[-1] in ColorList:
+            if color[-1] in color_list:
                 color = color[-1]
             elif color[-1] == u"银":
                 color = u"灰"
             else:
                 flag = True
                 for v in color:
-                    if v in ColorList:
+                    if v in color_list:
                         color = v
                         flag = False
                 if flag:
@@ -140,4 +147,4 @@ def load_car_color_json_data(car_json_path,resize=(512,512),crop_percentage=1.0,
         else:
             return None,None
 
-    return image,color
+    return image, color

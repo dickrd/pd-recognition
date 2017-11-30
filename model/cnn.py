@@ -86,16 +86,13 @@ def predict(model_path, name_dict, feed_image, feed_image_size, feed_image_chann
     image = load_image_data(image_path=feed_image,
                             resize=(feed_image_size, feed_image_size))
 
-    #image = tf.cast(image, tf.float32)
-    #image = np.reshape(np.array(image),(1,feed_image_size,feed_image_size,feed_image_channel))
-    image = np.expand_dims(image, axis=0)
     with tf.Graph().as_default():
         # Input placeholder.
-        x = tf.placeholder(tf.float32, shape=[1,feed_image_size, feed_image_size, 3], name='image_flat')
+        x = tf.placeholder(tf.float32, shape=[1, feed_image_size, feed_image_size, 3], name='image_flat')
         y, y_pred_cls = build(input_tensor=x, num_class=len(name_dict),
                               image_size=feed_image_size, image_channel=feed_image_channel)
         y_pred = tf.nn.softmax(y)
-        feed_dict = {x: image}
+        feed_dict = {x: np.expand_dims(image, axis=0)}
 
         # Run supervised session.
         init_op = tf.group(tf.global_variables_initializer(),
