@@ -7,7 +7,7 @@ from data.name_generation import generate_name_from_path
 
 def convert_image(input_path, label_index, resize,
                   limit, name_count, random_chance,
-                  output_path, dry_run,
+                  output_path, dry_run, regression,
                   load_image, packed, crop_percentage, name_filter):
     import random
 
@@ -57,15 +57,19 @@ def convert_image(input_path, label_index, resize,
                     # Skip unqualified files.
                     if not name:
                         continue
-                    if name_count and name_count[name] < limit:
-                        continue
 
-                    # Convert readable name to int label. Save the conversion for converting back.
-                    if name not in name_labels:
-                        label = len(name_labels)
-                        name_labels[name] = label
+                    if regression:
+                        label = float(name)
                     else:
-                        label = name_labels[name]
+                        if name_count and name_count[name] < limit:
+                            continue
+
+                        # Convert readable name to int label. Save the conversion for converting back.
+                        if name not in name_labels:
+                            label = len(name_labels)
+                            name_labels[name] = label
+                        else:
+                            label = name_labels[name]
 
                     # Count name wrote times.
                     if name not in name_wrote_count:
@@ -107,9 +111,13 @@ def convert_image(input_path, label_index, resize,
     # Close the writers.
     for writer in writers:
         writer.close()
-    # Save name label conversion.
-    with open(os.path.join(output_path, "name_labels.json"), 'w') as label_file:
-        label_file.write(json.dumps(name_labels))
+
+    if not regression:
+        # Save name label conversion.
+        label_path = os.path.join(output_path, "name_labels.json")
+        with open(label_path, 'w') as label_file:
+            label_file.write(json.dumps(name_labels))
+        print "Saved name label conversion: " + label_path
 
     return name_wrote_count
 
@@ -180,6 +188,8 @@ def _main():
                         help="limit data set size of every label to a fixed number")
     parser.add_argument("--name-count",
                         help="path to dry run generated json file for limit to skip unqualified names")
+    parser.add_argument("--regression", action="store_true",
+                        help="set to make labels as float numbers parsed from names")
     args = parser.parse_args()
 
     if not args.input_path:
@@ -226,7 +236,7 @@ def _main():
         print "Adding all names."
 
     name_count = None
-    if args.limit:
+    if args.limit and not args.regression:
         print "Image in each name will be limited to {0}".format(args.limit),
         if args.name_count:
             with open(args.name_count, 'r') as name_count_file:
@@ -238,9 +248,9 @@ def _main():
     print "Image will be resized to: " + str(args.resize) + "x" + str(args.resize)
 
     name_wrote_count = convert_image(input_path=args.input_path, label_index=args.label_index, resize=args.resize,
-                                limit=args.limit, name_count=name_count, random_chance=args.random_chance,
-                                output_path=args.output_path, dry_run=args.dry_run,
-                                load_image=load_image, packed=packed, crop_percentage=args.crop, name_filter=name_filter)
+                                     limit=args.limit, name_count=name_count, random_chance=args.random_chance,
+                                     output_path=args.output_path, dry_run=args.dry_run, regression=args.regression,
+                                     load_image=load_image, packed=packed, crop_percentage=args.crop, name_filter=name_filter)
 
     print_dataset_summary(name_wrote_count, write_path=args.output_path)
     print "Done."
