@@ -1,7 +1,9 @@
+#coding:utf-8
 import json
 import os
 
 from data.image_loading import load_compcar_with_crop, load_image_data, load_car_json_data, get_label_path_of_compcar
+from data.image_loading import load_car_color_json_data
 from data.name_generation import generate_name_from_path
 
 
@@ -143,14 +145,14 @@ def print_dataset_summary(name_wrote_count, write_path=None):
 def _main():
     """
     Tool to convert rgb images to tfrecords.
-    
+
     The random chance is for example [0.2, 0.3] indicating that there is a 20% chance a
-    specific image will be written to the second tfrecord file and if it fails, there will be a 
-    30% chance it will be written to the third tfrecord file and if all these fails, it will, 
+    specific image will be written to the second tfrecord file and if it fails, there will be a
+    30% chance it will be written to the third tfrecord file and if all these fails, it will,
     default to be written to the first file.
 
     Filter json file is a dict from different categories (string) to names list.
-    :return: None 
+    :return: None
     """
     import argparse
 
@@ -162,7 +164,7 @@ def _main():
     parser.add_argument("-d", "--dry-run", action="store_true",
                         help="generate json statistics only")
     parser.add_argument("-p", "--pre-process", default="general",
-                        help="which process to take (general, jsoncar, compcar)")
+                        help="which process to take (general, jsoncar, compcar,carcolor)")
     parser.add_argument("-l", "--label-index", type=int, default=-2,
                         help="which directory in path will be label")
     parser.add_argument("-o", "--output-path", default="./",
@@ -204,6 +206,9 @@ def _main():
         load_image = load_compcar_with_crop
     elif args.pre_process == "jsoncar":
         load_image = load_car_json_data
+        packed = True
+    elif args.pre_process == "carcolor":
+        load_image = load_car_color_json_data
         packed = True
     else:
         print "Unsupported process type: " + args.pre_process
