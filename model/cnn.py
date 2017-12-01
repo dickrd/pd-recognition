@@ -18,7 +18,7 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
                               image_size=image_size, image_channel=image_channel)
 
         if regression:
-            cost = tf.reduce_sum(tf.pow(y - classes, 2)) / (2 * float(batch_size))
+            cost = tf.reduce_sum(tf.pow(y - classes, 2)) / (2 * tf.cast(batch_size, dtype=tf.float32))
         else:
             # Calculate cross-entropy for each image.
             # This function calculates the softmax internally, so use the output layer directly.
