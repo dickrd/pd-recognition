@@ -58,12 +58,16 @@ class TfWriter(object):
 class TfReader(object):
     def __init__(self, data_path, regression=False, size=(512, 512), num_epochs=1):
         self.reader = tf.TFRecordReader()
-        self.regression = regression
         self.filename_queue = tf.train.string_input_producer(data_path, num_epochs=num_epochs)
         self.size = size
 
         self.data_path = data_path
         self.num_epoch = num_epochs
+
+        if regression:
+            self.label_type = tf.float32
+        else:
+            self.label_type = tf.int64
 
     def read(self, batch_size=50, num_threads=4, capacity=1000, min_after_dequeue=100):
         """
@@ -85,13 +89,8 @@ class TfReader(object):
                     self.num_epoch, batch_size, num_threads,
                     min_after_dequeue, capacity)
 
-        if self.regression:
-            label_type = tf.float32
-        else:
-            label_type = tf.int64
-
         feature_structure = {'image': tf.FixedLenFeature([], tf.string),
-                             'label': tf.FixedLenFeature([], label_type)}
+                             'label': tf.FixedLenFeature([], self.label_type)}
 
         # Read serialized data.
         _, serialized_example = self.reader.read(self.filename_queue)
@@ -101,7 +100,7 @@ class TfReader(object):
         image = tf.decode_raw(features['image'], tf.uint8)
         image = tf.cast(image, tf.float32)
         image = tf.reshape(image, [self.size[0], self.size[1], 3])
-        label = tf.cast(features['label'], label_type)
+        label = tf.cast(features['label'], self.label_type)
 
         # Random bathing.
         images, labels = tf.train.shuffle_batch([image, label],
