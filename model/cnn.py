@@ -9,7 +9,7 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
     from data.common import TfReader
     with tf.Graph().as_default():
         # Read training data.
-        train_data = TfReader(data_path=train_data_path,
+        train_data = TfReader(data_path=train_data_path, regression=regression,
                               size=(image_size, image_size),
                               num_epochs=num_epoch)
         images, classes = train_data.read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
@@ -18,7 +18,7 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
                               image_size=image_size, image_channel=image_channel)
 
         if regression:
-            cost = tf.reduce_sum(tf.pow(y - classes, 2)) / (2 * tf.cast(batch_size, dtype=tf.float32))
+            cost = tf.reduce_sum(tf.pow(y - classes, 2)) / (2 * batch_size)
         else:
             # Calculate cross-entropy for each image.
             # This function calculates the softmax internally, so use the output layer directly.
@@ -41,7 +41,7 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
     with tf.Graph().as_default():
 
         # Read test data.
-        train_data = TfReader(data_path=test_data_path, size=(image_size, image_size))
+        train_data = TfReader(data_path=test_data_path, regression=regression, size=(image_size, image_size))
         images, classes = train_data.read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
 
         y, y_pred_cls = build(input_tensor=images, num_class=class_count,
