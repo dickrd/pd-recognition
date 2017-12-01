@@ -1,10 +1,10 @@
 import tensorflow as tf
 
-from model.common import build_cnn, optimize, ConfusionMatrix
+from model.common import build_cnn, optimize, ConfusionMatrix, RegressionBias
 
 
 def train(model_path, train_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
-          scope=None, learning_rate=1e-4,
+          regression=False, scope=None, learning_rate=1e-4,
           num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800):
     from data.common import TfReader
     with tf.Graph().as_default():
@@ -17,25 +17,28 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
         y, y_pred_cls = build(input_tensor=images, num_class=class_count,
                               image_size=image_size, image_channel=image_channel)
 
-        # Calculate cross-entropy for each image.
-        # This function calculates the softmax internally, so use the output layer directly.
-        # The input label is of type int in [0, num_class).
-        cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=y,
-                                                                       labels=classes)
+        if regression:
+            cost = tf.reduce_sum(tf.pow(y - classes, 2)) / (2 * batch_size)
+        else:
+            # Calculate cross-entropy for each image.
+            # This function calculates the softmax internally, so use the output layer directly.
+            # The input label is of type int in [0, num_class).
+            cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=y,
+                                                                           labels=classes)
 
-        # Calculate average cost across all images.
-        cost = tf.reduce_mean(cross_entropy)
+            # Calculate average cost across all images.
+            cost = tf.reduce_mean(cross_entropy)
 
         optimize(cost=cost, save_path=model_path, report_rate=report_rate,
                  scope=scope, learning_rate=learning_rate)
 
 
 def test(model_path, test_data_path, class_count, image_size, image_channel=3, report_rate=10, build=build_cnn,
+         regression=False,
          batch_size=100, capacity=3000, min_after_dequeue=800):
     from data.common import TfReader
     import os
     with tf.Graph().as_default():
-        confusion_matrix = ConfusionMatrix(class_count=class_count)
 
         # Read test data.
         train_data = TfReader(data_path=test_data_path, size=(image_size, image_size))
@@ -43,7 +46,14 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
 
         y, y_pred_cls = build(input_tensor=images, num_class=class_count,
                               image_size=image_size, image_channel=image_channel)
-        correct_prediction = tf.equal(y_pred_cls, classes)
+
+        if regression:
+            correct_prediction = y - classes
+            statistics = RegressionBias()
+        else:
+            correct_prediction = tf.equal(y_pred_cls, classes)
+            statistics = ConfusionMatrix(class_count=class_count)
+
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         # Run session.
@@ -64,22 +74,22 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
                     step_count += 1.0
                     predictions, truth, current_accuracy = sess.run([y_pred_cls, classes, accuracy])
                     overall_accuracy += current_accuracy
-                    confusion_matrix.update(predictions=predictions, truth=truth)
+                    statistics.update(predictions=predictions, truth=truth)
                     if step_count % report_rate == 0:
-                        print "{0} steps passed with accuracy of {1}/{2}."\
+                        print "{0} steps passed with result of {1}/{2}."\
                             .format(step_count, current_accuracy, overall_accuracy / step_count)
                         print "Sample predictions: {0}".format(predictions)
             except tf.errors.OutOfRangeError:
                 print "All images used in {0} steps.".format(step_count)
             finally:
-                print "Final accuracy: {0}.".format(overall_accuracy / step_count)
-                print "Confusion matrix:"
-                print confusion_matrix.matrix
+                print "Final result: {0}.".format(overall_accuracy / step_count)
+                statistics.print_result()
 
         return overall_accuracy / step_count
 
 
-def predict(model_path, name_dict, feed_image, feed_image_size, feed_image_channel=3, build=build_cnn):
+def predict(model_path, name_dict, class_count, feed_image, feed_image_size, feed_image_channel=3, build=build_cnn,
+            regression=False):
     from data.image_loading import load_image_data
     print "Loading image from {0} with size: {1}x{1}.".format(feed_image, feed_image_size)
     image = load_image_data(image_path=feed_image,
@@ -87,8 +97,9 @@ def predict(model_path, name_dict, feed_image, feed_image_size, feed_image_chann
     with tf.Graph().as_default():
         # Input placeholder.
         x = tf.placeholder(tf.float32, shape=[feed_image_size, feed_image_size, 3], name='image_flat')
-        y, y_pred_cls = build(input_tensor=x, num_class=len(name_dict),
+        y, y_pred_cls = build(input_tensor=x, num_class=class_count,
                               image_size=feed_image_size, image_channel=feed_image_channel)
+
         y_pred = tf.nn.softmax(y)
         feed_dict = {x: image}
 
@@ -103,10 +114,14 @@ def predict(model_path, name_dict, feed_image, feed_image_size, feed_image_chann
         with tf.Session() as sess:
             sess.run(init_op)
             saver.restore(sess, os.path.join(model_path, checkpoint_name))
-            predictions, predicted_class = sess.run([y_pred, y_pred_cls], feed_dict=feed_dict)
+            if regression:
+                predictions = sess.run([y], feed_dict=feed_dict)
+            else:
+                predictions, predicted_class = sess.run([y_pred, y_pred_cls], feed_dict=feed_dict)
+                name = next(key for key, value in name_dict.items() if value == predicted_class)
+                print "The predicted class is: " + name
+
             print "The prediction is: {0}".format(predictions)
-            name = next(key for key, value in name_dict.items() if value == predicted_class)
-            print "The predicted class is: " + name
 
 
 def _use_model():
@@ -132,6 +147,9 @@ def _use_model():
                         help="path to stored model")
     parser.add_argument("-s", "--resize", default=512, type=int,
                         help="resized image size")
+
+    parser.add_argument("--regression", action="store_true",
+                        help="set to make labels as float numbers parsed from names")
     args = parser.parse_args()
 
     scope = None
@@ -155,11 +173,10 @@ def _use_model():
         print "Unsupported model type: " + args.model_type
         return
 
-    if args.action == "train":
-        if not args.data:
-            print "Must specify data path(--data)!"
-            return
-
+    if args.regression:
+        label_names = None
+        class_count = 1
+    else:
         if not args.class_label:
             print "Must specify class label file(--class-label)!"
             return
@@ -169,7 +186,13 @@ def _use_model():
             label_names = json.load(label_file)
             class_count = len(label_names)
 
-        train(model_path=args.model_path, train_data_path=args.data, class_count=class_count, build=build, scope=scope,
+    if args.action == "train":
+        if not args.data:
+            print "Must specify data path(--data)!"
+            return
+
+        train(model_path=args.model_path, train_data_path=args.data, class_count=class_count,
+              regression=args.regression, build=build, scope=scope,
               image_size=args.resize)
 
     elif args.action == "test":
@@ -177,16 +200,8 @@ def _use_model():
             print "Must specify data path(--data)!"
             return
 
-        if not args.class_label:
-            print "Must specify class label file(--class-label)!"
-            return
-
-        import json
-        with open(args.class_label, 'r') as label_file:
-            label_names = json.load(label_file)
-            class_count = len(label_names)
-
-        test(model_path=args.model_path, test_data_path=args.data, class_count=class_count, build=build,
+        test(model_path=args.model_path, test_data_path=args.data, class_count=class_count,
+             regression=args.regression, build=build,
              image_size=args.resize)
 
     elif args.action == "predict":
@@ -199,30 +214,21 @@ def _use_model():
             print "Must specify directory of trained model(--model-path)!"
             return
 
-        if not args.class_label:
-            print "Must specify class label file(--class-label)!"
-            return
-
-        with open(args.class_label, 'r') as label_file:
-            label_names = json.load(label_file)
-            predict(model_path=args.model_path, name_dict=label_names, feed_image=args.image, build=build,
-                    feed_image_size=args.resize)
+        predict(model_path=args.model_path, name_dict=label_names, feed_image=args.image, class_count=class_count,
+                regression=args.regression, build=build,
+                feed_image_size=args.resize)
 
     elif args.action == "auto":
         from model.autotune import tune_cnn
         if not args.test_data:
             print "Must specify test data path(--test-data)!"
 
-        if not args.class_label:
+        if not args.class_label and not args.regression:
             print "Must specify class label file(--class-label)!"
             return
 
-        import json
-        with open(args.class_label, 'r') as label_file:
-            label_names = json.load(label_file)
-            class_count = len(label_names)
-
-        tune_cnn(save_path=args.model_path, train_data_path=args.data, test_data_path=args.test_data, class_count=class_count, build=build, scope=scope,
+        tune_cnn(save_path=args.model_path, train_data_path=args.data, test_data_path=args.test_data, class_count=class_count,
+                 regression=args.regression, build=build, scope=scope,
                  image_size=args.resize)
 
     else:

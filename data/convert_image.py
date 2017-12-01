@@ -21,7 +21,7 @@ def convert_image(input_path, label_index, resize,
     # File path list of tfrecord files.
     result_files = [os.path.join(output_path, "train.tfrecords")]
     # Writers list.
-    writers = [TfWriter(result_files[0])]
+    writers = [TfWriter(result_files[0], regression=regression)]
     # Count of each tfrecord file.
     file_wrote_count = [0]
     # Count for each name.
@@ -30,7 +30,7 @@ def convert_image(input_path, label_index, resize,
     print "Default output file: " + result_files[0]
     for index, item in enumerate(random_chance):
         result_files.append(os.path.join(output_path, "test_" + str(index) + ".tfrecords"))
-        writers.append(TfWriter(result_files[index + 1]))
+        writers.append(TfWriter(result_files[index + 1], regression=regression))
         file_wrote_count.append(0)
         print "Chance for example to file " + result_files[index + 1] + ": " + str(item)
 
