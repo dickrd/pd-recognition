@@ -48,7 +48,6 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
                               image_size=image_size, image_channel=image_channel)
 
         if regression:
-            print "Shape: {0}, {1}".format(tf.shape(y), tf.shape(classes))
             prediction_op = tf.squeeze(y)
             correct_prediction = tf.transpose(y) - classes
             statistics = RegressionBias()
