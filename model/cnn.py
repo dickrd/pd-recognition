@@ -48,9 +48,11 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
                               image_size=image_size, image_channel=image_channel)
 
         if regression:
+            prediction_op = y
             correct_prediction = tf.transpose(y) - classes
             statistics = RegressionBias()
         else:
+            prediction_op = y_pred_cls
             correct_prediction = tf.equal(y_pred_cls, classes)
             statistics = ConfusionMatrix(class_count=class_count)
 
@@ -72,7 +74,7 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
             try:
                 while True:
                     step_count += 1.0
-                    predictions, truth, current_accuracy = sess.run([y_pred_cls, classes, accuracy])
+                    predictions, truth, current_accuracy = sess.run([prediction_op, classes, accuracy])
                     overall_accuracy += current_accuracy
                     statistics.update(predictions=predictions, truth=truth)
                     if step_count % report_rate == 0:
