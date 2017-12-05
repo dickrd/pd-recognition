@@ -48,7 +48,7 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
                               image_size=image_size, image_channel=image_channel)
 
         if regression:
-            prediction_op = y
+            prediction_op = tf.transpose(y)
             correct_prediction = tf.transpose(y) - classes
             statistics = RegressionBias()
         else:
