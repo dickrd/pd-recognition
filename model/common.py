@@ -31,7 +31,7 @@ class RegressionBias(object):
             return
 
         for i in range(len(predictions)):
-            bias = predictions[i] - truth[i]
+            bias = int(round(predictions[i] - truth[i]))
             if bias not in self.bias:
                 self.bias[bias] = 1
             else:
