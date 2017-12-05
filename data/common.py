@@ -17,7 +17,7 @@ class AutoList(list):
 
 # noinspection PyUnusedLocal
 class DummyWriter(object):
-    def __init__(self, write_path):
+    def __init__(self, write_path, regression=False):
         pass
     def close(self):
         pass
@@ -26,8 +26,9 @@ class DummyWriter(object):
 
 
 class TfWriter(object):
-    def __init__(self, write_path):
+    def __init__(self, write_path, regression=False):
         self.writer = tf.python_io.TFRecordWriter(write_path)
+        self.regression = regression
 
     def close(self):
         self.writer.close()
@@ -39,22 +40,34 @@ class TfWriter(object):
         :param label: Label of this image.
         :return: None.
         """
-        an_feature = {
-            "label": _int64_feature(label),
-            "image": _bytes_feature(tf.compat.as_bytes(image.tobytes()))
-        }
+        if self.regression:
+            an_feature = {
+                "label": _float_feature(label),
+                "image": _bytes_feature(tf.compat.as_bytes(image.tobytes()))
+            }
+        else:
+            an_feature = {
+                "label": _int64_feature(label),
+                "image": _bytes_feature(tf.compat.as_bytes(image.tobytes()))
+            }
+
         an_example = tf.train.Example(features=tf.train.Features(feature=an_feature))
         self.writer.write(an_example.SerializeToString())
 
 
 class TfReader(object):
-    def __init__(self, data_path, size=(512, 512), num_epochs=1):
+    def __init__(self, data_path, regression=False, size=(512, 512), num_epochs=1):
         self.reader = tf.TFRecordReader()
         self.filename_queue = tf.train.string_input_producer(data_path, num_epochs=num_epochs)
         self.size = size
 
         self.data_path = data_path
         self.num_epoch = num_epochs
+
+        if regression:
+            self.label_type = tf.float32
+        else:
+            self.label_type = tf.int64
 
     def read(self, batch_size=50, num_threads=4, capacity=1000, min_after_dequeue=100):
         """
@@ -77,7 +90,7 @@ class TfReader(object):
                     min_after_dequeue, capacity)
 
         feature_structure = {'image': tf.FixedLenFeature([], tf.string),
-                             'label': tf.FixedLenFeature([], tf.int64)}
+                             'label': tf.FixedLenFeature([], self.label_type)}
 
         # Read serialized data.
         _, serialized_example = self.reader.read(self.filename_queue)
@@ -87,7 +100,7 @@ class TfReader(object):
         image = tf.decode_raw(features['image'], tf.uint8)
         image = tf.cast(image, tf.float32)
         image = tf.reshape(image, [self.size[0], self.size[1], 3])
-        label = tf.cast(features['label'], tf.int64)
+        label = tf.cast(features['label'], self.label_type)
 
         # Random bathing.
         images, labels = tf.train.shuffle_batch([image, label],
@@ -96,6 +109,10 @@ class TfReader(object):
                                                 num_threads=num_threads,
                                                 min_after_dequeue=min_after_dequeue)
         return images, labels
+
+
+def _float_feature(value):
+    return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
 
 
 def _int64_feature(value):

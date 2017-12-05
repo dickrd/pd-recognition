@@ -38,7 +38,7 @@ class TuningSave(object):
 
 
 def tune_cnn(save_path, train_data_path, test_data_path, class_count, image_size, image_channel=3, tuning_rate=100, build=build_cnn,
-             scope=None,
+             regression=False, scope=None,
              batch_size=10, capacity=3000, min_after_dequeue=800):
     tuning_save = TuningSave(save_path=save_path)
     print "Tuning model parameters:\n" \
@@ -48,14 +48,16 @@ def tune_cnn(save_path, train_data_path, test_data_path, class_count, image_size
     while True:
         tuning_save.next_iteration()
         print "Start training: ", tuning_save.status["iteration"]
-        train(model_path=save_path, train_data_path=train_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel, build=build,
-              scope=scope,
+        train(model_path=save_path, train_data_path=train_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel,
+              regression=regression, build=build, scope=scope,
               num_epoch=1, batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
         print "Start testing on training set: ", tuning_save.status["iteration"]
-        test(model_path=save_path, test_data_path=train_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel, report_rate=100, build=build,
+        test(model_path=save_path, test_data_path=train_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel, report_rate=100,
+             regression=regression, build=build,
              batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
         print "Start testing on testing set: ", tuning_save.status["iteration"]
-        accuracy = test(model_path=save_path, test_data_path=test_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel, report_rate=100, build=build,
+        accuracy = test(model_path=save_path, test_data_path=test_data_path, class_count=class_count, image_size=image_size, image_channel=image_channel, report_rate=100,
+                        regression=regression, build=build,
                         batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
 
         previous_status = "(previous accuracy is {0} with {1})"\

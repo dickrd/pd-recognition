@@ -15,6 +15,35 @@ class ConfusionMatrix(object):
         for i in range(len(predictions)):
             self.matrix[truth[i]][predictions[i]] += 1
 
+    def print_result(self):
+        print "Confusion matrix:"
+        print self.matrix
+
+
+class RegressionBias(object):
+    def __init__(self):
+        self.bias = {}
+
+    def update(self, predictions, truth):
+        if not (len(predictions) == len(truth)):
+            print "Incompatible length: predictions({0}), truth({1})" \
+                .format(len(predictions), len(truth))
+            return
+
+        for i in range(len(predictions)):
+            bias = predictions[i] - truth[i]
+            bias = int(bias + (0.5 if bias > 0 else -0.5))
+            if bias not in self.bias:
+                self.bias[bias] = 1
+            else:
+                self.bias[bias] += 1
+
+    def print_result(self):
+        key_list = self.bias.keys()
+        key_list.sort()
+        print "Bias distribution:"
+        for key in key_list:
+            print "\t{0}:\t\t{1}".format(key, self.bias[key])
 
 def optimize(cost, save_path, report_rate=100,
              scope=None, learning_rate=1e-4):
