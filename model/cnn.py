@@ -50,7 +50,7 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
 
         if regression:
             prediction_op = tf.squeeze(y)
-            correct_prediction = tf.transpose(y) - classes
+            correct_prediction = tf.abs(tf.transpose(y) - classes)
             statistics = RegressionBias()
         else:
             prediction_op = y_pred_cls
