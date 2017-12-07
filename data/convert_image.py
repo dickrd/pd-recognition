@@ -256,6 +256,7 @@ def _main():
     print "Image will be resized to: " + str(args.resize) + "x" + str(args.resize)
 
     if args.reverse:
+        print "Start extract images from tfrecord files."
         extract_image(input_path=args.input_path, resize=args.resize, limit=args.limit, output_path=args.output_path,
                       regression=args.regression)
         return
