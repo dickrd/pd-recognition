@@ -34,15 +34,19 @@ def extract_image(input_path, resize, limit, output_path,
                 img = img[0]
                 label = label[0]
 
+                output_dir = os.path.join(output_path, str(label))
+
                 # Count name wrote times.
                 if label not in label_wrote_count:
                     label_wrote_count[label] = 0
+                    if not os.path.isdir(output_path):
+                        os.mkdir(output_path)
                 # Skip extra images.
                 elif limit and label_wrote_count[label] >= limit:
                     continue
 
-                Image.fromarray(np.uint8(img), "RGB").save(os.path.join(output_path, str(label),
-                                                                           "step_{0}.jpg".format(step_count)))
+                Image.fromarray(np.uint8(img), "RGB").save(os.path.join(output_dir,
+                                                                        "step_{0}.jpg".format(step_count)))
                 if step_count % report_rate == 0:
                     print "{0} steps passed with label wrote: ".format(step_count),
                     print label_wrote_count
