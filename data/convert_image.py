@@ -7,6 +7,41 @@ from data.image_loading import load_car_color_json_data
 from data.name_generation import generate_name_from_path
 
 
+def extract_image(input_path, resize, limit, output_path,
+                  regression,
+                  report_rate=50):
+    from data.common import TfReader
+    from PIL import Image
+    import numpy as np
+    import tensorflow as tf
+
+    reader = TfReader(data_path=input_path, regression=regression, size=(resize, resize))
+    img_op, label_op = reader.read(batch_size=1)
+    with tf.Session() as sess:
+        tf.train.start_queue_runners(sess)
+        step_count = 0
+        label_wrote_count = {}
+        try:
+            while True:
+                step_count += 1
+                img, label = sess.run([img_op, label_op])
+
+                # Count name wrote times.
+                if label not in label_wrote_count:
+                    label_wrote_count[label] = 0
+                # Skip extra images.
+                elif limit and label_wrote_count[label] >= limit:
+                    continue
+
+                Image.fromarray(np.uint8(img[0]), "RGB").save(os.path.join(output_path, str(label),
+                                                                           "step_{0}.jpg".format(step_count)))
+                if step_count % report_rate == 0:
+                    print "{0} steps passed with label wrote: ".format(step_count),
+                    print label_wrote_count
+        except tf.errors.OutOfRangeError:
+            print "All images used in {0} steps.".format(step_count)
+
+
 def convert_image(input_path, label_index, resize,
                   limit, name_count, random_chance,
                   output_path, dry_run, regression,
@@ -59,13 +94,12 @@ def convert_image(input_path, label_index, resize,
                     # Skip unqualified files.
                     if not name:
                         continue
+                    if name_count and name_count[name] < limit:
+                        continue
 
                     if regression:
                         label = float(name)
                     else:
-                        if name_count and name_count[name] < limit:
-                            continue
-
                         # Convert readable name to int label. Save the conversion for converting back.
                         if name not in name_labels:
                             label = len(name_labels)
@@ -168,7 +202,7 @@ def _main():
     parser = argparse.ArgumentParser(description="convert image to tfrecords file.")
 
     parser.add_argument("-i", "--input-path", nargs='+',
-                        help="path to image files")
+                        help="path to input files")
     parser.add_argument("-d", "--dry-run", action="store_true",
                         help="generate json statistics only")
     parser.add_argument("-p", "--pre-process", default="general",
@@ -178,7 +212,7 @@ def _main():
     parser.add_argument("-o", "--output-path", default="./",
                         help="path to store result tfrecords")
     parser.add_argument("-r", "--random-chance", default=[], type=float, nargs='*',
-                        help="chance to split an example to a new tfrecord file")
+                        help="chance to split an example to a new tfrecord file or save image to output if reverse")
     parser.add_argument("-s", "--resize", default=512, type=int,
                         help="size to resize image files to")
 
@@ -192,15 +226,35 @@ def _main():
                         help="path to dry run generated json file for limit to skip unqualified names")
     parser.add_argument("--regression", action="store_true",
                         help="set to make labels as float numbers parsed from names")
+    parser.add_argument("--reverse", action="store_true",
+                        help="read tfrecord file and extract images in it")
     args = parser.parse_args()
 
     if not args.input_path:
-        print "Must specify image paths(--image-path)!"
+        print "Must specify input paths(--input-path)!"
+        return
+
+    name_count = None
+    if args.limit:
+        print "Image in each name will be limited to {0}".format(args.limit),
+        if args.name_count:
+            with open(args.name_count, 'r') as name_count_file:
+                name_count = json.load(name_count_file)
+                print " and unqualified names will be skipped."
+        else:
+            print "."
+
+    print "Image will be resized to: " + str(args.resize) + "x" + str(args.resize)
+
+    if args.reverse:
+        extract_image(input_path=args.input_path, resize=args.resize, limit=args.limit, output_path=args.output_path,
+                      regression=args.regression)
         return
 
     packed = False
     if args.pre_process == "general":
         load_image = load_image_data
+        print "General pre-process."
     elif args.pre_process == "compcar":
         label_path = []
         for a_input_path in args.input_path:
@@ -211,15 +265,18 @@ def _main():
                 print "No label directories in: " + a_label_path
                 return
 
+        print "Compcar pre-process."
         print "Crop compcar full images using labels in: ",
         print label_path
         load_image = load_compcar_with_crop
     elif args.pre_process == "jsoncar":
         load_image = load_car_json_data
         packed = True
+        print "Read image in json car file with brand as label."
     elif args.pre_process == "carcolor":
         load_image = load_car_color_json_data
         packed = True
+        print "Read image in json car file with color as label."
     else:
         print "Unsupported process type: " + args.pre_process
         return
@@ -239,18 +296,6 @@ def _main():
             print "Unexpected name filter syntax: " + args.name_filter
     else:
         print "Adding all names."
-
-    name_count = None
-    if args.limit and not args.regression:
-        print "Image in each name will be limited to {0}".format(args.limit),
-        if args.name_count:
-            with open(args.name_count, 'r') as name_count_file:
-                name_count = json.load(name_count_file)
-                print " and unqualified names will be skipped."
-        else:
-            print "."
-
-    print "Image will be resized to: " + str(args.resize) + "x" + str(args.resize)
 
     name_wrote_count = convert_image(input_path=args.input_path, label_index=args.label_index, resize=args.resize,
                                      limit=args.limit, name_count=name_count, random_chance=args.random_chance,
