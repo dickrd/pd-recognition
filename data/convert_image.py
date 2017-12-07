@@ -31,6 +31,8 @@ def extract_image(input_path, resize, limit, output_path,
             while True:
                 step_count += 1
                 img, label = sess.run([img_op, label_op])
+                img = img[0]
+                label = label[0]
 
                 # Count name wrote times.
                 if label not in label_wrote_count:
@@ -39,7 +41,7 @@ def extract_image(input_path, resize, limit, output_path,
                 elif limit and label_wrote_count[label] >= limit:
                     continue
 
-                Image.fromarray(np.uint8(img[0]), "RGB").save(os.path.join(output_path, str(label),
+                Image.fromarray(np.uint8(img), "RGB").save(os.path.join(output_path, str(label),
                                                                            "step_{0}.jpg".format(step_count)))
                 if step_count % report_rate == 0:
                     print "{0} steps passed with label wrote: ".format(step_count),
