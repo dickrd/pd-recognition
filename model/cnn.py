@@ -180,6 +180,7 @@ def _use_model():
     if args.regression:
         label_names = None
         class_count = 1
+        print "Regression set."
     else:
         if not args.class_label:
             print "Must specify class label file(--class-label)!"

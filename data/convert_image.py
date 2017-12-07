@@ -14,10 +14,16 @@ def extract_image(input_path, resize, limit, output_path,
     from PIL import Image
     import numpy as np
     import tensorflow as tf
+    import os
+
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
     reader = TfReader(data_path=input_path, regression=regression, size=(resize, resize))
     img_op, label_op = reader.read(batch_size=1)
+    init_op = tf.group(tf.global_variables_initializer(),
+                       tf.local_variables_initializer())
     with tf.Session() as sess:
+        sess.run([init_op])
         tf.train.start_queue_runners(sess)
         step_count = 0
         label_wrote_count = {}
@@ -212,7 +218,7 @@ def _main():
     parser.add_argument("-o", "--output-path", default="./",
                         help="path to store result tfrecords")
     parser.add_argument("-r", "--random-chance", default=[], type=float, nargs='*',
-                        help="chance to split an example to a new tfrecord file or save image to output if reverse")
+                        help="chance to split an example to a new tfrecord file")
     parser.add_argument("-s", "--resize", default=512, type=int,
                         help="size to resize image files to")
 
@@ -233,6 +239,9 @@ def _main():
     if not args.input_path:
         print "Must specify input paths(--input-path)!"
         return
+
+    if args.regression:
+        print "Regression set."
 
     name_count = None
     if args.limit:
