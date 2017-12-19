@@ -34,9 +34,9 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
                  scope=scope, learning_rate=learning_rate)
 
 
-def test(model_path, test_data_path, class_count, image_size, image_channel=3, report_rate=10, build=build_cnn,
+def test(model_path, test_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
          regression=False,
-         batch_size=100, capacity=3000, min_after_dequeue=800):
+         batch_size=1, capacity=3000, min_after_dequeue=800):
     from data.common import TfReader
     import os
     with tf.Graph().as_default():
@@ -74,8 +74,8 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
             step_count = 0.0
             try:
                 while True:
-                    step_count += 1.0
                     predictions, truth, current_accuracy = sess.run([prediction_op, classes, accuracy])
+                    step_count += 1.0
                     overall_accuracy += current_accuracy
                     statistics.update(predictions=predictions, truth=truth)
                     if step_count % report_rate == 0:

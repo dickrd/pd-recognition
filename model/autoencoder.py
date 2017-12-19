@@ -125,8 +125,8 @@ def train_autoencoder(model_path, train_data_path, image_size, report_rate=100,
         optimize(cost=cost, save_path=model_path, report_rate=report_rate,
                  scope=None, learning_rate=learning_rate)
 
-def test_autoencoder(model_path, test_data_path, image_size, report_rate=10,
-                     batch_size=100, capacity=3000, min_after_dequeue=800):
+def test_autoencoder(model_path, test_data_path, image_size, report_rate=100,
+                     batch_size=1, capacity=3000, min_after_dequeue=800):
     from PIL import Image
     import numpy as np
     import os
@@ -155,8 +155,8 @@ def test_autoencoder(model_path, test_data_path, image_size, report_rate=10,
             step_count = 0.0
             try:
                 while True:
-                    step_count += 1.0
                     original, decoded, predictions, current_cost = sess.run([images, y, z, cost])
+                    step_count += 1.0
                     overall_cost += current_cost
                     if step_count % report_rate == 0:
                         Image.fromarray(np.uint8(decoded[0]), "RGB") \
