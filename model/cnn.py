@@ -4,9 +4,11 @@ import numpy as np
 from model.common import build_cnn, optimize, ConfusionMatrix, RegressionBias
 
 
-def run_cluster(model_path, train_data_path, class_count, image_size,
-                regression=False, build=build_cnn, scope=None,
+def run_cluster(model_path, train_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
+                regression=False, scope=None, learning_rate=1e-4,
+                num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800,
                 ps_hosts=None, worker_hosts=None, job_name=None, task_index=0):
+    from data.common import TfReader
     # Create a cluster from the parameter server and worker hosts.
     cluster = tf.train.ClusterSpec({"ps": ps_hosts, "worker": worker_hosts})
 
@@ -16,11 +18,35 @@ def run_cluster(model_path, train_data_path, class_count, image_size,
     if job_name == "ps":
         server.join()
     elif job_name == "worker":
-        # Assigns ops to the local worker by default.
-        with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:{0}".format(task_index), cluster=cluster)):
-            train(model_path=model_path, train_data_path=train_data_path, class_count=class_count, image_size=image_size,
-                  regression=regression, build=build, scope=scope,
-                  master=server.target, task_index=task_index)
+        with tf.Graph().as_default():
+            # Assigns ops to the local worker by default.
+            with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:{0}".format(task_index), cluster=cluster)):
+
+                # Read training data.
+                train_data = TfReader(data_path=train_data_path, regression=regression,
+                                      size=(image_size, image_size),
+                                      num_epochs=num_epoch)
+                images, classes = train_data.read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+
+
+                y, y_pred_cls = build(input_tensor=images, num_class=class_count,
+                                      image_size=image_size, image_channel=image_channel)
+
+                if regression:
+                    cost = tf.reduce_sum(tf.pow(tf.transpose(y) - classes, 2)) / (2 * batch_size)
+                else:
+                    # Calculate cross-entropy for each image.
+                    # This function calculates the softmax internally, so use the output layer directly.
+                    # The input label is of type int in [0, num_class).
+                    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=y,
+                                                                                   labels=classes)
+
+                    # Calculate average cost across all images.
+                    cost = tf.reduce_mean(cross_entropy)
+
+            optimize(cost=cost, save_path=model_path, report_rate=report_rate,
+                     scope=scope, learning_rate=learning_rate,
+                     master=server.target, task_index=task_index)
     else:
         print "Unknown job: " + job_name
 
