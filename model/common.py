@@ -45,6 +45,21 @@ class RegressionBias(object):
         for key in key_list:
             print "\t{0}:\t\t{1}".format(key, self.bias[key])
 
+
+def make_parallel(fn, num_gpus, **kwargs):
+    in_splits = {}
+    for k, v in kwargs.items():
+        in_splits[k] = tf.split(v, num_gpus)
+
+    out_split = []
+    for i in range(num_gpus):
+        with tf.device(tf.DeviceSpec(device_type="GPU", device_index=i)):
+            with tf.variable_scope(tf.get_variable_scope(), reuse=i > 0):
+                out_split.append(fn(**{k : v[i] for k, v in in_splits.items()}))
+
+    return tf.concat(out_split, axis=0)
+
+
 def optimize(cost, save_path, report_rate=100,
              scope=None, learning_rate=1e-4):
     print "Learning model parameters:\n" \
@@ -57,11 +72,13 @@ def optimize(cost, save_path, report_rate=100,
         var_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
                                                                                  global_step=global_step_op,
-                                                                                 var_list=var_to_train)
+                                                                                 var_list=var_to_train,
+                                                                                 colocate_gradients_with_ops=True)
         print "Optimizing variables: {0}".format(var_to_train)
     else:
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
-                                                                                 global_step=global_step_op)
+                                                                                 global_step=global_step_op,
+                                                                                 colocate_gradients_with_ops=True)
         print "Optimizing all trainable variables."
 
     # Run supervised session.
