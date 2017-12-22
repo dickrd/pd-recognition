@@ -250,7 +250,7 @@ def action(build, scope,
             has_cluster_config = True
             cluster_config_count += 1
             print "Job is " + args.job_name
-        if args.task_index:
+        if args.task_index or args.task_index == 0:
             has_cluster_config = True
             cluster_config_count += 1
             print "Task index is {0}".format(args.task_index)
