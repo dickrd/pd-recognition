@@ -100,7 +100,7 @@ def optimize(cost, save_path, report_rate=100,
         except tf.errors.OutOfRangeError:
             print "All images used in {0} steps.".format(global_step)
         finally:
-            mon_sess.request_stop()
+            mon_sess.close()
 
 
 def build_cnn(input_tensor, num_class, image_size, image_channel=3):

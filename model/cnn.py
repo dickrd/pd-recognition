@@ -241,11 +241,11 @@ def action(build, scope,
         if args.ps:
             has_cluster_config = True
             cluster_config_count += 1
-            print "Using ps: " + args.ps
+            print "Using ps: {0}".format(args.ps)
         if args.worker:
             has_cluster_config = True
             cluster_config_count += 1
-            print "Using worker: " + args.worker
+            print "Using worker: {0}".format(args.worker)
         if args.job_name:
             has_cluster_config = True
             cluster_config_count += 1
@@ -253,7 +253,7 @@ def action(build, scope,
         if args.task_index:
             has_cluster_config = True
             cluster_config_count += 1
-            print "Task index is " + args.task_index
+            print "Task index is {0}".format(args.task_index)
 
         if has_cluster_config:
             if cluster_config_count == 4:
