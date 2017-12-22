@@ -6,7 +6,7 @@ from model.common import build_cnn, optimize, ConfusionMatrix, RegressionBias
 
 def run_cluster(model_path, train_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
                 regression=False, scope=None, learning_rate=1e-4,
-                num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800,
+                num_epoch=50, batch_size=50, capacity=3000, min_after_dequeue=800,
                 ps_hosts=None, worker_hosts=None, job_name=None, task_index=0):
     from data.common import TfReader
     # Create a cluster from the parameter server and worker hosts.
@@ -53,8 +53,7 @@ def run_cluster(model_path, train_data_path, class_count, image_size, image_chan
 
 def train(model_path, train_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
           regression=False, scope=None, learning_rate=1e-4,
-          num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800,
-          master="", task_index=0):
+          num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800):
     from data.common import TfReader
     with tf.Graph().as_default():
         # Read training data.
@@ -80,8 +79,7 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
             cost = tf.reduce_mean(cross_entropy)
 
         optimize(cost=cost, save_path=model_path, report_rate=report_rate,
-                 scope=scope, learning_rate=learning_rate,
-                 master=master, task_index=task_index)
+                 scope=scope, learning_rate=learning_rate)
 
 
 def test(model_path, test_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
