@@ -4,9 +4,31 @@ import numpy as np
 from model.common import build_cnn, optimize, ConfusionMatrix, RegressionBias
 
 
+def run_cluster(model_path, train_data_path, class_count, image_size,
+                regression=False, build=build_cnn, scope=None,
+                ps_hosts=None, worker_hosts=None, job_name=None, task_index=0):
+    # Create a cluster from the parameter server and worker hosts.
+    cluster = tf.train.ClusterSpec({"ps": ps_hosts, "worker": worker_hosts})
+
+    # Create and start a server for the local task.
+    server = tf.train.Server(cluster, job_name=job_name, task_index=task_index)
+
+    if job_name == "ps":
+        server.join()
+    elif job_name == "worker":
+        # Assigns ops to the local worker by default.
+        with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:{0}".format(task_index), cluster=cluster)):
+            train(model_path=model_path, train_data_path=train_data_path, class_count=class_count, image_size=image_size,
+                  regression=regression, build=build, scope=scope,
+                  master=server.target, task_index=task_index)
+    else:
+        print "Unknown job: " + job_name
+
+
 def train(model_path, train_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
           regression=False, scope=None, learning_rate=1e-4,
-          num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800):
+          num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800,
+          master="", task_index=0):
     from data.common import TfReader
     with tf.Graph().as_default():
         # Read training data.
@@ -32,7 +54,8 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
             cost = tf.reduce_mean(cross_entropy)
 
         optimize(cost=cost, save_path=model_path, report_rate=report_rate,
-                 scope=scope, learning_rate=learning_rate)
+                 scope=scope, learning_rate=learning_rate,
+                 master=master, task_index=task_index)
 
 
 def test(model_path, test_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
@@ -155,6 +178,14 @@ def _use_model():
 
     parser.add_argument("--regression", action="store_true",
                         help="set to make labels as float numbers parsed from names")
+    parser.add_argument("--ps", nargs='*',
+                        help="ps hosts in address:port format")
+    parser.add_argument("--worker", nargs='*',
+                        help="worker hosts in address:port format")
+    parser.add_argument("--job-name",
+                        help="name of this job (ps, worker)")
+    parser.add_argument("--task-index", type=int,
+                        help="index of this task")
     args = parser.parse_args()
 
     scope = None
@@ -192,14 +223,50 @@ def _use_model():
             label_names = json.load(label_file)
             class_count = len(label_names)
 
+    action(build=build, scope=scope,
+           label_names=label_names, class_count=class_count,
+           args=args)
+
+
+def action(build, scope,
+           label_names, class_count,
+           args):
     if args.action == "train":
         if not args.data:
             print "Must specify data path(--data)!"
             return
 
-        train(model_path=args.model_path, train_data_path=args.data, class_count=class_count,
-              regression=args.regression, build=build, scope=scope,
-              image_size=args.resize)
+        has_cluster_config = False
+        cluster_config_count = 0
+        if args.ps:
+            has_cluster_config = True
+            cluster_config_count += 1
+            print "Using ps: " + args.ps
+        if args.worker:
+            has_cluster_config = True
+            cluster_config_count += 1
+            print "Using worker: " + args.worker
+        if args.job_name:
+            has_cluster_config = True
+            cluster_config_count += 1
+            print "Job is " + args.job_name
+        if args.task_index:
+            has_cluster_config = True
+            cluster_config_count += 1
+            print "Task index is " + args.task_index
+
+        if has_cluster_config:
+            if cluster_config_count == 4:
+                run_cluster(model_path=args.model_path, train_data_path=args.data, class_count=class_count,
+                            regression=args.regression, build=build, scope=scope,
+                            image_size=args.resize,
+                            ps_hosts=args.ps, worker_hosts=args.worker, job_name=args.job_name, task_index=args.task_index)
+            else:
+                print "Cluster config incomplete, --ps --worker --job-name, or --task-index is missing!"
+        else:
+            train(model_path=args.model_path, train_data_path=args.data, class_count=class_count,
+                  regression=args.regression, build=build, scope=scope,
+                  image_size=args.resize)
 
     elif args.action == "test":
         if not args.data:

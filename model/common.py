@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import os
 
 
 class ConfusionMatrix(object):
@@ -46,9 +47,23 @@ class RegressionBias(object):
             print "\t{0}:\t\t{1}".format(key, self.bias[key])
 
 
+class EndSavingHook(tf.train.SessionRunHook):
+    def __init__(self, save_path, global_step):
+        self._save_path = os.path.join(save_path, "model.ckpt")
+        self._global_step = global_step
+        self._saver = None
+
+    def begin(self):
+        self._saver = tf.train.Saver()
+
+    def end(self, session):
+        self._saver.save(sess=session, save_path=self._save_path, global_step=self._global_step)
+
+
+
 def optimize(cost, save_path, report_rate=100,
              scope=None, learning_rate=1e-4,
-             master='', task_index=0):
+             master="", task_index=0):
     print "Learning model parameters:\n" \
           "\tmodel save path:\t{0}\n" \
           "\treport     rate:\t{1}\n" \
@@ -71,9 +86,11 @@ def optimize(cost, save_path, report_rate=100,
     # The MonitoredTrainingSession takes care of session initialization,
     # restoring from a checkpoint, saving to a checkpoint, and closing when done
     # or an error occurs.
+    hooks = [EndSavingHook(save_path=save_path, global_step=global_step_op)]
     with tf.train.MonitoredTrainingSession(master=master,
                                            is_chief=(task_index == 0),
-                                           checkpoint_dir=save_path) as mon_sess:
+                                           checkpoint_dir=save_path,
+                                           hooks=hooks) as mon_sess:
         global_step = -1
         try:
             while not mon_sess.should_stop():
