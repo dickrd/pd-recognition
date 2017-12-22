@@ -1,12 +1,12 @@
 import tensorflow as tf
 import numpy as np
 
-from model.common import build_cnn, optimize, make_parallel, ConfusionMatrix, RegressionBias
+from model.common import build_cnn, optimize, ConfusionMatrix, RegressionBias
 
 
 def train(model_path, train_data_path, class_count, image_size, image_channel=3, report_rate=100, build=build_cnn,
           regression=False, scope=None, learning_rate=1e-4,
-          num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800, num_gpu=1):
+          num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800):
     from data.common import TfReader
     with tf.Graph().as_default():
         # Read training data.
@@ -16,8 +16,8 @@ def train(model_path, train_data_path, class_count, image_size, image_channel=3,
         images, classes = train_data.read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
 
 
-        y, y_pred_cls = make_parallel(build, num_gpus=num_gpu, input_tensor=images, num_class=class_count,
-                                      image_size=image_size, image_channel=image_channel)
+        y, y_pred_cls = build(input_tensor=images, num_class=class_count,
+                              image_size=image_size, image_channel=image_channel)
 
         if regression:
             cost = tf.reduce_sum(tf.pow(tf.transpose(y) - classes, 2)) / (2 * batch_size)

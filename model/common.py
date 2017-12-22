@@ -46,22 +46,9 @@ class RegressionBias(object):
             print "\t{0}:\t\t{1}".format(key, self.bias[key])
 
 
-def make_parallel(fn, num_gpus, **kwargs):
-    in_splits = {}
-    for k, v in kwargs.items():
-        in_splits[k] = tf.split(v, num_gpus)
-
-    out_split = []
-    for i in range(num_gpus):
-        with tf.device(tf.DeviceSpec(device_type="GPU", device_index=i)):
-            with tf.variable_scope(tf.get_variable_scope(), reuse=i > 0):
-                out_split.append(fn(**{k : v[i] for k, v in in_splits.items()}))
-
-    return tf.concat(out_split, axis=0)
-
-
 def optimize(cost, save_path, report_rate=100,
-             scope=None, learning_rate=1e-4):
+             scope=None, learning_rate=1e-4,
+             master='', task_index=0):
     print "Learning model parameters:\n" \
           "\tmodel save path:\t{0}\n" \
           "\treport     rate:\t{1}\n" \
@@ -81,21 +68,22 @@ def optimize(cost, save_path, report_rate=100,
                                                                                  colocate_gradients_with_ops=True)
         print "Optimizing all trainable variables."
 
-    # Run supervised session.
-    supervisor = tf.train.Supervisor(logdir=save_path)
-    with supervisor.managed_session() as sess:
+    # The MonitoredTrainingSession takes care of session initialization,
+    # restoring from a checkpoint, saving to a checkpoint, and closing when done
+    # or an error occurs.
+    with tf.train.MonitoredTrainingSession(master=master,
+                                           is_chief=(task_index == 0),
+                                           checkpoint_dir=save_path) as mon_sess:
         global_step = -1
         try:
-            while not supervisor.should_stop():
-                _, global_step, current_cost = sess.run([optimizer, global_step_op, cost])
+            while not mon_sess.should_stop():
+                _, global_step, current_cost = mon_sess.run([optimizer, global_step_op, cost])
                 if global_step % report_rate == 0:
                     print "{0} steps passed with current cost: {1}.".format(global_step, current_cost)
         except tf.errors.OutOfRangeError:
             print "All images used in {0} steps.".format(global_step)
         finally:
-            import os
-            supervisor.saver.save(sess=sess, save_path=os.path.join(save_path, "model.ckpt"), global_step=global_step)
-            supervisor.request_stop()
+            mon_sess.request_stop()
 
 
 def build_cnn(input_tensor, num_class, image_size, image_channel=3):
