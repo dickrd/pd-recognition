@@ -52,12 +52,17 @@ class AdienceUtil(object):
                                 self.label = "(25, 32)"
                             elif age in range(38, 44):
                                 self.label = "(38, 43)"
-                            elif age in range(48, 36):
-                                self.label = "(48, 35)"
+                            elif age in range(48, 54):
+                                self.label = "(48, 53)"
                             else:
                                 self.label = "(60, 100)"
                         except ValueError:
-                            pass
+                            if self.label == "(27, 32)":
+                                self.label = "(25, 32)"
+                            elif self.label == "(38, 42)":
+                                self.label = "(38, 43)"
+                            elif self.label == "(38, 48)":
+                                self.label = "(38, 43)"
 
                         yield self.parent, None, [self.image_path]
             except IOError as e:
