@@ -54,7 +54,7 @@ class AdienceUtil(object):
                                 self.label = "(38, 43)"
                             elif age in range(48, 54):
                                 self.label = "(48, 53)"
-                            else:
+                            elif age >= 60:
                                 self.label = "(60, 100)"
                         except ValueError:
                             if self.label == "(27, 32)":
