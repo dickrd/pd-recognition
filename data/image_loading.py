@@ -37,6 +37,28 @@ class AdienceUtil(object):
 
                         self.image_path = image_pattern.format(parts[0], parts[2], parts[1])
                         self.label = parts[3]
+
+                        try:
+                            age = int(self.label)
+                            if age in range(0, 3):
+                                self.label = "(0, 2)"
+                            elif age in range(4, 7):
+                                self.label = "(4, 6)"
+                            elif age in range(8, 13):
+                                self.label = "(8, 12)"
+                            elif age in range(15, 21):
+                                self.label = "(15, 20)"
+                            elif age in range(25, 33):
+                                self.label = "(25, 32)"
+                            elif age in range(38, 44):
+                                self.label = "(38, 43)"
+                            elif age in range(48, 36):
+                                self.label = "(48, 35)"
+                            else:
+                                self.label = "(60, 100)"
+                        except ValueError:
+                            pass
+
                         yield self.parent, None, [self.image_path]
             except IOError as e:
                 print "Reading {0} failed: {1}".format(item, repr(e))
