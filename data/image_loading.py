@@ -20,7 +20,7 @@ class AdienceUtil(object):
         if os.path.isdir(input_path):
             self.parent = input_path
             for index in range(fold_count):
-                fold_path.append(os.path.join(input_path, fold_pattern.format(fold_count)))
+                fold_path.append(os.path.join(input_path, fold_pattern.format(index)))
         else:
             self.parent = os.path.dirname(input_path)
             fold_path.append(input_path)
