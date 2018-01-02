@@ -1,5 +1,50 @@
 #coding=utf-8
+import os
+
 from PIL import Image
+
+
+class AdienceUtil(object):
+
+    def __init__(self):
+        self.parent = None
+        self.image_path = None
+        self.label = None
+
+    def walk(self, input_path):
+        fold_pattern = "fold_frontal_{0}_data.txt"
+        image_pattern = "aligned/{0}/landmark_aligned_face.{1}.{2}.jpg"
+        fold_count = 5
+        fold_path = []
+
+        if os.path.isdir(input_path):
+            self.parent = input_path
+            for index in range(fold_count):
+                fold_path.append(os.path.join(input_path, fold_pattern.format(fold_count)))
+        else:
+            self.parent = os.path.dirname(input_path)
+            fold_path.append(input_path)
+
+        for item in fold_path:
+            try:
+                with open(item, 'r') as fold_file:
+                    for line in fold_file:
+                        parts = line.split("\t")
+
+                        # Skip header.
+                        if parts[0] == "user_id":
+                            continue
+
+                        self.image_path = image_pattern.format(parts[0], parts[2], parts[1])
+                        self.label = parts[3]
+                        yield self.parent, None, [self.image_path]
+            except IOError as e:
+                print "Reading {0} failed: {1}".format(item, repr(e))
+
+    # noinspection PyUnusedLocal
+    def name(self, file_path, index=0):
+        assert file_path == os.path.join(self.parent, self.image_path)
+        return self.label
 
 
 def get_label_path_of_compcar(image_path):

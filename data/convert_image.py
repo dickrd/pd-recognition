@@ -2,7 +2,8 @@
 import json
 import os
 
-from data.image_loading import load_compcar_with_crop, load_image_data, load_car_json_data, get_label_path_of_compcar
+from data.image_loading import load_compcar_with_crop, load_image_data, load_car_json_data, get_label_path_of_compcar, \
+    AdienceUtil
 from data.image_loading import load_car_color_json_data
 from data.name_generation import generate_name_from_path
 
@@ -58,7 +59,8 @@ def extract_image(input_path, resize, limit, output_path,
 def convert_image(input_path, label_index, resize,
                   limit, name_count, random_chance,
                   output_path, dry_run, regression,
-                  load_image, packed, crop_percentage, name_filter):
+                  load_image, packed, crop_percentage, name_filter,
+                  walk=os.walk, generate_name=generate_name_from_path):
     import random
 
     if dry_run:
@@ -89,7 +91,7 @@ def convert_image(input_path, label_index, resize,
     img = None
     for directory in input_path:
         # Walk through given path, to find car images.
-        for path, subdirs, files in os.walk(directory):
+        for path, _, files in walk(directory):
             print "In: " + path
             for a_file in files:
                 # Try to read image.
@@ -102,7 +104,7 @@ def convert_image(input_path, label_index, resize,
                                                crop_percentage=crop_percentage, name_filter=name_filter)
                     else:
                         img = load_image(current_file_path, resize=(resize, resize))
-                        name = generate_name_from_path(current_file_path, index=label_index)
+                        name = generate_name(current_file_path, index=label_index)
 
                     # Skip unqualified files.
                     if not name:
@@ -268,7 +270,9 @@ def _main():
                       regression=args.regression)
         return
 
+    walk = os.walk
     packed = False
+    generate_name = generate_name_from_path
     if args.pre_process == "general":
         load_image = load_image_data
         print "General pre-process."
@@ -294,6 +298,12 @@ def _main():
         load_image = load_car_color_json_data
         packed = True
         print "Read image in json car file with color as label."
+    elif args.pre_process == "adience":
+        adience = AdienceUtil()
+        load_image = load_image_data
+        walk = adience.walk
+        generate_name = adience.name
+        print "Adience pre-process."
     else:
         print "Unsupported process type: " + args.pre_process
         return
@@ -317,7 +327,8 @@ def _main():
     name_wrote_count = convert_image(input_path=args.input_path, label_index=args.label_index, resize=args.resize,
                                      limit=args.limit, name_count=name_count, random_chance=args.random_chance,
                                      output_path=args.output_path, dry_run=args.dry_run, regression=args.regression,
-                                     load_image=load_image, packed=packed, crop_percentage=args.crop, name_filter=name_filter)
+                                     load_image=load_image, packed=packed, crop_percentage=args.crop, name_filter=name_filter,
+                                     walk=walk, generate_name=generate_name)
 
     print_dataset_summary(name_wrote_count, write_path=args.output_path)
     print "Done."
