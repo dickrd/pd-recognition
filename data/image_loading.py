@@ -12,7 +12,7 @@ class AdienceUtil(object):
         self.label = None
 
     def walk(self, input_path):
-        fold_pattern = "fold_frontal_{0}_data.txt"
+        fold_pattern = "fold_{0}_data.txt"
         image_pattern = "aligned/{0}/landmark_aligned_face.{1}.{2}"
         fold_count = 5
         fold_path = []
