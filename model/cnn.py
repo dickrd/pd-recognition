@@ -141,10 +141,11 @@ def test(model_path, test_data_path, class_count, image_size, image_channel=3, r
 
 def predict(model_path, name_dict, class_count, feed_image, feed_image_size, feed_image_channel=3, build=build_cnn,
             regression=False):
-    from data.image_loading import load_image_data
+    from data.image_loading import load_image_data, normalize_image
+
     print "Loading image from {0} with size: {1}x{1}.".format(feed_image, feed_image_size)
-    image = load_image_data(image_path=feed_image,
-                            resize=(feed_image_size, feed_image_size))
+    image = load_image_data(image_path=feed_image)
+    image = normalize_image(image, resize=(feed_image_size, feed_image_size))
 
     with tf.Graph().as_default():
         # Input placeholder.

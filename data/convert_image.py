@@ -3,7 +3,7 @@ import json
 import os
 
 from data.image_loading import load_compcar_with_crop, load_image_data, load_car_json_data, get_label_path_of_compcar, \
-    AdienceUtil
+    AdienceUtil, normalize_image
 from data.image_loading import load_car_color_json_data
 from data.name_generation import generate_name_from_path
 
@@ -15,7 +15,6 @@ def extract_image(input_path, resize, limit, output_path,
     from PIL import Image
     import numpy as np
     import tensorflow as tf
-    import os
 
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -89,10 +88,10 @@ def convert_image(input_path, label_index, resize,
     # Name to label conversion.
     name_labels = {}
     img = None
+    last_path= None
     for directory in input_path:
         # Walk through given path, to find car images.
         for path, _, files in walk(directory):
-            print "In: " + path
             for a_file in files:
                 # Try to read image.
                 # noinspection PyBroadException
@@ -100,11 +99,21 @@ def convert_image(input_path, label_index, resize,
                     current_file_path = os.path.join(path, a_file)
 
                     if packed:
-                        img, name = load_image(current_file_path, resize=(resize, resize),
-                                               crop_percentage=crop_percentage, name_filter=name_filter)
+                        img, name = load_image(current_file_path)
                     else:
-                        img = load_image(current_file_path, resize=(resize, resize))
+                        img = load_image(current_file_path)
                         name = generate_name(current_file_path, index=label_index)
+
+                    if name_filter and name:
+                        # Search in name filter.
+                        found = False
+                        for approved_name in name_filter:
+                            # If the name of this image is approved.
+                            if approved_name == name:
+                                found = True
+                                break
+                        if not found:
+                            name = None
 
                     # Skip unqualified files.
                     if not name:
@@ -113,6 +122,7 @@ def convert_image(input_path, label_index, resize,
                         continue
 
                     if regression:
+                        # Convert label to float.
                         label = float(name)
                     else:
                         # Convert readable name to int label. Save the conversion for converting back.
@@ -129,7 +139,9 @@ def convert_image(input_path, label_index, resize,
                     elif limit and name_wrote_count[name] >= limit:
                         continue
 
-                    # If this car image has been write to a tfrecord file.
+                    # Resize and crop if necessary.
+                    img = normalize_image(img, resize=(resize, resize), crop_percentage=crop_percentage)
+                    # This image has not been write to a tfrecord file.
                     write = False
 
                     # Determine which tfrecord file to write this image to.
@@ -148,9 +160,13 @@ def convert_image(input_path, label_index, resize,
                 except Exception as e:
                     print "Error reading " + a_file + ": " + repr(e)
 
-            # Count example for every directory read.
-            for index, file_name in enumerate(result_files):
-                print "Current examples in " + file_name + ": " + str(file_wrote_count[index])
+
+            if not last_path or (last_path != path):
+                last_path = path
+                print "{0} has been processed.".format(path)
+                # Count example for every directory read.
+                for index, file_name in enumerate(result_files):
+                    print "Current examples in " + file_name + ": " + str(file_wrote_count[index])
 
     if img:
         sample_path = os.path.join(output_path, "sample.jpg")
@@ -184,9 +200,9 @@ def print_dataset_summary(name_wrote_count, write_path=None):
     sorted_kv = sorted(name_wrote_count.items(), key=lambda x: x[1])
     count = 0
     for item in sorted_kv:
-        print "\t({0}, {1})".format(item[0].encode("utf-8"), item[1]),
+        print "\t<{0},\t{1}>".format(item[0].encode("utf-8"), item[1]),
         count += 1
-        if count % 6 == 0:
+        if count % 5 == 0:
             print ""
     print ""
 
@@ -262,7 +278,8 @@ def _main():
         else:
             print "."
 
-    print "Image will be resized to: " + str(args.resize) + "x" + str(args.resize)
+    print "{0}% of original image will be used.".format(args.crop * 100)
+    print "And resized to " + str(args.resize) + "x" + str(args.resize)
 
     if args.reverse:
         print "Start extract images from tfrecord files."
