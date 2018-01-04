@@ -218,7 +218,7 @@ def print_dataset_summary(name_wrote_count=None, store_path=None, read_mode=Fals
     sorted_kv = sorted(name_wrote_count.items(), key=lambda x: x[1])
     count = 0
     for item in sorted_kv:
-        print "\t<{0},\t{1}>".format(item[0].encode("utf-8"), item[1]),
+        print "\t<{0}, {1}>".format(item[0].encode("utf-8"), item[1]),
         count += 1
         if count % 5 == 0:
             print ""
