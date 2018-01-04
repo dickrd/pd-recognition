@@ -192,7 +192,7 @@ def _use_model():
                         help="path to formatted tfrecords data")
     parser.add_argument("-v", "--test-data", nargs='*',
                         help="path to formatted tfrecords test data (used only with auto action)")
-    parser.add_argument("-l", "--class-label",
+    parser.add_argument("-n", "--name-label",
                         help="path to json file that contains a map of readable name to class label.")
     parser.add_argument("-t", "--model-type", default="general",
                         help="which type of model to use (general, autoencoder, googlecar, vggface, resnet)")
@@ -239,12 +239,12 @@ def _use_model():
         class_count = 1
         print "Regression set."
     else:
-        if not args.class_label:
-            print "Must specify class label file(--class-label)!"
+        if not args.name_label:
+            print "Must specify name label file(--name-label)!"
             return
 
         import json
-        with open(args.class_label, 'r') as label_file:
+        with open(args.name_label, 'r') as label_file:
             label_names = json.load(label_file)
             class_count = len(label_names)
 
@@ -321,8 +321,8 @@ def action(build, scope,
         if not args.test_data:
             print "Must specify test data path(--test-data)!"
 
-        if not args.class_label and not args.regression:
-            print "Must specify class label file(--class-label)!"
+        if not args.name_label and not args.regression:
+            print "Must specify name label file(--name-label)!"
             return
 
         tune_cnn(save_path=args.model_path, train_data_path=args.data, test_data_path=args.test_data, class_count=class_count,

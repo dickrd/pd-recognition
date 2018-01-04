@@ -59,7 +59,7 @@ def convert_image(input_path, label_index, resize,
                   limit, name_count, random_chance,
                   output_path, dry_run, regression,
                   load_image, packed, crop_percentage, name_filter,
-                  walk=os.walk, generate_name=generate_name_from_path):
+                  walk=os.walk, generate_name=generate_name_from_path, name_label_path=None):
     import random
 
     if dry_run:
@@ -86,7 +86,11 @@ def convert_image(input_path, label_index, resize,
         print "Chance for example to file " + result_files[index + 1] + ": " + str(item)
 
     # Name to label conversion.
-    name_labels = {}
+    if name_label_path:
+        with open(name_label_path, 'r') as name_label_file:
+            name_labels = json.loads(name_label_file)
+    else:
+        name_labels = {}
     img = None
     last_path= None
     for directory in input_path:
@@ -258,6 +262,8 @@ def _main():
                         help="which process to take (general, jsoncar, compcar, carcolor, adience)")
     parser.add_argument("-l", "--label-index", type=int, default=-2,
                         help="which directory in path will be label")
+    parser.add_argument("-n", "--name-label",
+                        help="path to json file that contains a map of readable name to class label.")
     parser.add_argument("-o", "--output-path", default="./",
                         help="path to store result tfrecords")
     parser.add_argument("-r", "--random-chance", default=[], type=float, nargs='*',
@@ -290,6 +296,8 @@ def _main():
 
     if args.regression:
         print "Regression set."
+    elif args.name_label:
+        print "Reuse name label map file: " + args.name_label
 
     name_count = None
     if args.limit:
@@ -368,7 +376,7 @@ def _main():
                                      limit=args.limit, name_count=name_count, random_chance=args.random_chance,
                                      output_path=args.output_path, dry_run=args.dry_run, regression=args.regression,
                                      load_image=load_image, packed=packed, crop_percentage=args.crop, name_filter=name_filter,
-                                     walk=walk, generate_name=generate_name)
+                                     walk=walk, generate_name=generate_name, name_label_path=args.name_label)
 
     print_dataset_summary(name_wrote_count, store_path=args.output_path)
     print "Done."
