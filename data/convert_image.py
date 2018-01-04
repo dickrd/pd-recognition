@@ -296,6 +296,8 @@ def _main():
             print "===={0}====".format(directory)
             print_dataset_summary(store_path=directory, read_mode=True)
 
+        return
+
     if args.regression:
         print "Regression set."
     elif args.name_label:
