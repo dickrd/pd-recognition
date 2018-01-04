@@ -292,7 +292,9 @@ def _main():
         return
 
     if args.print_statistics:
-        print_dataset_summary(store_path=args.input_path, read_mode=True)
+        for directory in args.input_path:
+            print "===={0}====".format(directory)
+            print_dataset_summary(store_path=directory, read_mode=True)
 
     if args.regression:
         print "Regression set."
