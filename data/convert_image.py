@@ -161,12 +161,19 @@ def convert_image(input_path, label_index, resize,
                     print "Error reading " + a_file + ": " + repr(e)
 
 
-            if not last_path or (last_path != path):
+            if not last_path:
                 last_path = path
-                print "{0} has been processed.".format(path)
-                # Count example for every directory read.
+            if last_path != path:
+                # Print directory summary.
+                print "{0} has been processed.".format(last_path)
                 for index, file_name in enumerate(result_files):
                     print "Current examples in " + file_name + ": " + str(file_wrote_count[index])
+                last_path = path
+
+        # Print directory summary.
+        print "{0} has been processed.".format(last_path)
+        for index, file_name in enumerate(result_files):
+            print "Current examples in " + file_name + ": " + str(file_wrote_count[index])
 
     if img:
         sample_path = os.path.join(output_path, "sample.jpg")
