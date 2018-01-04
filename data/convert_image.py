@@ -88,7 +88,7 @@ def convert_image(input_path, label_index, resize,
     # Name to label conversion.
     if name_label_path:
         with open(name_label_path, 'r') as name_label_file:
-            name_labels = json.loads(name_label_file)
+            name_labels = json.load(name_label_file)
     else:
         name_labels = {}
     img = None
@@ -206,7 +206,7 @@ def print_dataset_summary(name_wrote_count=None, store_path=None, read_mode=Fals
         if read_mode:
             # Read result.
             with open(file_path, 'r') as count_file:
-                name_wrote_count = json.loads(count_file)
+                name_wrote_count = json.load(count_file)
         elif name_wrote_count:
             # Write results.
             with open(file_path, 'w') as count_file:
