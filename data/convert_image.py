@@ -222,7 +222,7 @@ def print_dataset_summary(name_wrote_count=None, store_path=None, read_mode=Fals
     sorted_kv = sorted(name_wrote_count.items(), key=lambda x: x[1])
     count = 0
     for item in sorted_kv:
-        print "\t<{0}, {1}>".format(item[0].encode("utf-8"), item[1]),
+        print "\t{0}, {1}\t|".format(item[0].encode("utf-8"), item[1]),
         count += 1
         if count % 5 == 0:
             print ""
@@ -232,9 +232,9 @@ def print_dataset_summary(name_wrote_count=None, store_path=None, read_mode=Fals
     mid_kv = sorted_kv[len(sorted_kv)/2]
     small_kv = sorted_kv[0]
     big_kv = sorted_kv[-1]
-    print "Middle:  \t({0}, {1})".format(mid_kv[0].encode("utf-8"), mid_kv[1])
-    print "Largest: \t({0}, {1})".format(big_kv[0].encode("utf-8"), big_kv[1])
-    print "Smallest:\t({0}, {1})".format(small_kv[0].encode("utf-8"), small_kv[1])
+    print "Middle:  \t{0}, {1}".format(mid_kv[0].encode("utf-8"), mid_kv[1])
+    print "Largest: \t{0}, {1}".format(big_kv[0].encode("utf-8"), big_kv[1])
+    print "Smallest:\t{0}, {1}".format(small_kv[0].encode("utf-8"), small_kv[1])
 
 
 def _main():
@@ -283,7 +283,7 @@ def _main():
                         help="set to make labels as float numbers parsed from names")
     parser.add_argument("--reverse", action="store_true",
                         help="read tfrecord file and extract images in it")
-    parser.add_argument("--print-statistics", action="store_true",
+    parser.add_argument("--print-summary", action="store_true",
                         help="print statistics of a converted dataset")
     args = parser.parse_args()
 
@@ -291,7 +291,7 @@ def _main():
         print "Must specify input paths(--input-path)!"
         return
 
-    if args.print_statistics:
+    if args.print_summary:
         for directory in args.input_path:
             print "===={0}====".format(directory)
             print_dataset_summary(store_path=directory, read_mode=True)
