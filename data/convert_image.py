@@ -189,14 +189,25 @@ def convert_image(input_path, label_index, resize,
     return name_wrote_count
 
 
-def print_dataset_summary(name_wrote_count, write_path=None):
-    if write_path:
-        # Write results.
-        with open(os.path.join(write_path, "name_count.json"), 'w') as count_file:
-            count_file.write(json.dumps(name_wrote_count))
+def print_dataset_summary(name_wrote_count=None, store_path=None, read_mode=False):
+    if store_path:
+        file_path = os.path.join(store_path, "name_count.json")
+        if read_mode:
+            # Read result.
+            with open(file_path, 'r') as count_file:
+                name_wrote_count = json.loads(count_file)
+        elif name_wrote_count:
+            # Write results.
+            with open(file_path, 'w') as count_file:
+                count_file.write(json.dumps(name_wrote_count))
 
     # Print statistics.
     print "Statics:"
+
+    if not name_wrote_count or len(name_wrote_count) == 0:
+        print "\tNone"
+        return
+
     sorted_kv = sorted(name_wrote_count.items(), key=lambda x: x[1])
     count = 0
     for item in sorted_kv:
@@ -259,11 +270,16 @@ def _main():
                         help="set to make labels as float numbers parsed from names")
     parser.add_argument("--reverse", action="store_true",
                         help="read tfrecord file and extract images in it")
+    parser.add_argument("--print-statistics", action="store_true",
+                        help="print statistics of a converted dataset")
     args = parser.parse_args()
 
     if not args.input_path:
         print "Must specify input paths(--input-path)!"
         return
+
+    if args.print_statistics:
+        print_dataset_summary(store_path=args.input_path, read_mode=True)
 
     if args.regression:
         print "Regression set."
@@ -347,7 +363,7 @@ def _main():
                                      load_image=load_image, packed=packed, crop_percentage=args.crop, name_filter=name_filter,
                                      walk=walk, generate_name=generate_name)
 
-    print_dataset_summary(name_wrote_count, write_path=args.output_path)
+    print_dataset_summary(name_wrote_count, store_path=args.output_path)
     print "Done."
 
 
