@@ -7,16 +7,23 @@ from model.common import build_cnn
 from multiprocessing.pool import ThreadPool
 
 
-class Config():
-    pass
+class Config(object):
+    def __init__(self):
+        pass
 
 
 config = Config()
 config.pool = ThreadPool(processes=50)
 config.name_labels = "name_labels.json"
 config.feed_image_size = 256
-config.feed_image_channel=3
-config.build=build_cnn
+config.feed_image_channel = 3
+config.build = build_cnn
+
+config.x = None
+config.sess = None
+config.y_pred = None
+config.y_pred_cls = None
+config.name_dict = None
 
 def load(model_path):
     import json, os
@@ -29,7 +36,7 @@ def load(model_path):
         # Input placeholder.
         config.x = tf.placeholder(tf.float32, shape=[1, config.feed_image_size, config.feed_image_size, 3], name='image_flat')
         config.y, config.y_pred_cls = config.build(input_tensor=config.x, num_class=class_count,
-                              image_size=config.feed_image_size, image_channel=config.feed_image_channel)
+                                                   image_size=config.feed_image_size, image_channel=config.feed_image_channel)
         config.y_pred = tf.nn.softmax(config.y)
 
         # Run supervised session.
@@ -50,8 +57,7 @@ def run(feed_image):
     return actual_run(feed_image)
 
 def actual_run(feed_image):
-    from data.image_loading import load_image_data, normalize_image
-    #image = load_image_data(feed_image)
+    from data.image_loading import normalize_image
     image = Image.open(io.BytesIO(feed_image)).convert(mode="RGB")
     image = normalize_image(image, resize=(config.feed_image_size, config.feed_image_size))
     feed_dict = {config.x: np.expand_dims(image, axis=0)}

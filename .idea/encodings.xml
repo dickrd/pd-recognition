@@ -2,6 +2,12 @@
 <project version="4">
   <component name="Encoding">
     <file url="file://$USER_HOME$/Documents/Tencent Files/1093372316/FileRecv/新建文本文档.txt" charset="GBK" />
+    <file url="file://E:/file/algo_libs/algo_lib_comm_api/algo_control_center_interface/task_mgr_interface.h" charset="GBK" />
+    <file url="file://E:/file/algo_libs/algo_lib_comm_api/algo_lib_comm_api.h" charset="GBK" />
+    <file url="file://E:/file/algo_libs/algo_librarys/capture_face/capture_face_if_convert.h" charset="GBK" />
+    <file url="file://E:/file/algo_libs/algo_librarys/capture_face/capture_face_interface.h" charset="GBK" />
+    <file url="file://E:/file/algo_libs/algo_librarys/capture_face/src/capture_face.cpp" charset="GBK" />
+    <file url="file://E:/file/algo_libs/algo_librarys/capture_face/src/capture_face.h" charset="GBK" />
     <file url="PROJECT" charset="UTF-8" />
   </component>
 </project>
