@@ -62,9 +62,10 @@ def load(model_path):
         with open(os.path.join(model_path, "checkpoint")) as checkpoint_file:
             checkpoint_name = checkpoint_file.readline().strip().split(':', 1)[1].strip()[1:-1]
         print "Using model: " + checkpoint_name
-        with tf.Session() as sess:
-            sess.run(init_op)
-            saver.restore(sess, os.path.join(model_path, checkpoint_name))
+        config.sess = tf.Session()
+        config.sess.run(init_op)
+        saver.restore(config.sess, os.path.join(model_path, checkpoint_name))
+
 
 
 def run(feed_image):
@@ -74,9 +75,6 @@ def run(feed_image):
 
     return actual_run(feed_image)
 
-def run_test(img_path):
-    image = Image.open(img_path).convert(mode="RGB")
-    return actual_run(image.tobytes())
 
 def actual_run(feed_image):
     from data.image_loading import normalize_image

@@ -11,6 +11,7 @@
     <file url="file://E:/file/algo_libs/algo_librarys/capture_face/src/capture_face.cpp" charset="GBK" />
     <file url="file://E:/file/algo_libs/algo_librarys/capture_face/src/capture_face.h" charset="GBK" />
     <file url="file://E:/file/algo_libs/algo_librarys/common/interface_struct_convert.h" charset="GBK" />
+    <file url="file://E:/pyrecognition/PyRecognition/recognition_gender.h" charset="GBK" />
     <file url="PROJECT" charset="UTF-8" />
   </component>
 </project>
