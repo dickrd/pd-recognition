@@ -101,7 +101,9 @@ def optimize(cost, save_path, report_rate=100,
             print "All images used in {0} steps.".format(global_step)
 
 
-def build_cnn(input_tensor, num_class, image_size, image_channel=3):
+# noinspection PyUnusedLocal
+def build_cnn(input_tensor, num_class, image_size, image_channel=3,
+              original_model=None):
 
     # Hyper-parameters.
     filter_size1 = 3
