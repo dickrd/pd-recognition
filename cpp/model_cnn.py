@@ -84,7 +84,7 @@ def actual_run(feed_image):
 
     if config.regression:
         predictions = config.sess.run([config.y], feed_dict=feed_dict)
-        return "{0:.1f}".format(predictions)
+        return "{0:.1f}".format(predictions[0][0][0])
     else:
         predictions, predicted_class = config.sess.run([config.y_pred, config.y_pred_cls], feed_dict=feed_dict)
         name = next(key for key, value in config.name_dict.items() if value == predicted_class)
