@@ -259,7 +259,7 @@ def _main():
     parser.add_argument("-d", "--dry-run", action="store_true",
                         help="generate json statistics only")
     parser.add_argument("-p", "--pre-process", default="general",
-                        help="which process to take (general, jsoncar, compcar, carcolor, adience)")
+                        help="which process to take (general, jsoncar, jsoncar-color, compcar, adience, adience-sex)")
     parser.add_argument("-l", "--label-index", type=int, default=-2,
                         help="which directory in path will be label")
     parser.add_argument("-n", "--name-label",
