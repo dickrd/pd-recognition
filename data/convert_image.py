@@ -346,7 +346,7 @@ def _main():
         load_image = load_car_json_data
         packed = True
         print "Read image in json car file with brand as label."
-    elif args.pre_process == "carcolor":
+    elif args.pre_process == "jsoncar-color":
         load_image = load_car_color_json_data
         packed = True
         print "Read image in json car file with color as label."
@@ -355,7 +355,13 @@ def _main():
         load_image = load_image_data
         walk = adience.walk
         generate_name = adience.name
-        print "Adience pre-process."
+        print "Adience pre-process using age as label."
+    elif args.pre_process == "adience-sex":
+        adience = AdienceUtil(sex=True)
+        load_image = load_image_data
+        walk = adience.walk
+        generate_name = adience.name
+        print "Adience pre-process using sex as label."
     else:
         print "Unsupported process type: " + args.pre_process
         return

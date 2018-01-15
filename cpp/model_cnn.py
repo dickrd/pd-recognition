@@ -67,7 +67,6 @@ def load(model_path):
         saver.restore(config.sess, os.path.join(model_path, checkpoint_name))
 
 
-
 def run(feed_image):
     # Multi-threading.
     #async_result = config.pool.apply_async(actual_run, (feed_image, ))
