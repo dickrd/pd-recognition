@@ -218,5 +218,5 @@ if __name__ == "__main__":
             for a_file in files:
                 img, name = load_car_json_data(a_file)
                 with open(os.path.join(path, a_file[:-4] + ".txt"), 'w') as label_file:
-                    label_file.write(name)
+                    label_file.write(name.encode("utf-8"))
                 img.save(os.path.join(path, a_file[:-4] + ".jpg"))
