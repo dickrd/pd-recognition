@@ -193,6 +193,30 @@ def load_car_color_json_data(car_json_path):
             image_bytes = base64.b64decode(j["image"])
             image = Image.open(io.BytesIO(image_bytes)).convert(mode="RGB")
         else:
-            return None,None
+            return None, None
 
     return image, color
+
+
+# Convert car json to image.
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        the_path = sys.argv[1:]
+    else:
+        the_path = ["./"]
+
+    for a_path in the_path:
+        a_path = a_path.encode("utf-8")
+        if os.path.isfile(a_path):
+            img, name = load_car_json_data(a_path)
+            with open(a_path[:-4] + ".txt", 'w') as label_file:
+                label_file.write(name.encode("utf-8"))
+            img.save(a_path[:-4] + ".jpg")
+
+        for path, _, files in os.walk(a_path):
+            for a_file in files:
+                img, name = load_car_json_data(a_file)
+                with open(os.path.join(path, a_file[:-4] + ".txt"), 'w') as label_file:
+                    label_file.write(name)
+                img.save(os.path.join(path, a_file[:-4] + ".jpg"))
