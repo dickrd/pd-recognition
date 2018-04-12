@@ -6,11 +6,67 @@ from PIL import Image
 
 class AdienceUtil(object):
 
-    def __init__(self, sex=False):
+    def __init__(self, sex=False, regression=False):
         self.parent = None
         self.image_path = None
         self.label = None
         self.sex= sex
+        self.regression = regression
+
+    def _label_to_age_string(self):
+        try:
+            age = int(self.label)
+            if age in range(0, 3):
+                self.label = "(0, 2)"
+            elif age in range(4, 7):
+                self.label = "(4, 6)"
+            elif age in range(8, 13):
+                self.label = "(8, 12)"
+            elif age in range(15, 21):
+                self.label = "(15, 20)"
+            elif age in range(25, 33):
+                self.label = "(25, 32)"
+            elif age in range(38, 44):
+                self.label = "(38, 43)"
+            elif age in range(48, 54):
+                self.label = "(48, 53)"
+            elif age >= 60:
+                self.label = "(60, 100)"
+        except ValueError:
+            if self.label == "(27, 32)":
+                self.label = "(25, 32)"
+            elif self.label == "(38, 42)":
+                self.label = "(38, 43)"
+            elif self.label == "(38, 48)":
+                self.label = "(38, 43)"
+
+    def _label_to_age_int(self):
+        try:
+            age = int(self.label)
+            self.label = age
+        except ValueError:
+            if self.label == "(0, 2)":
+                self.label = 1
+            elif self.label == "(4, 6)":
+                self.label = 5
+            elif self.label == "(8, 12)":
+                self.label = 10
+            elif self.label == "(15, 20)":
+                self.label = 18
+            elif self.label == "(25, 32)":
+                self.label = 28
+            elif self.label == "(38, 43)":
+                self.label = 40
+            elif self.label == "(48, 53)":
+                self.label = 50
+            elif self.label == "(60, 100)":
+                self.label = 80
+            elif self.label == "(27, 32)":
+                self.label = 30
+            elif self.label == "(38, 42)":
+                self.label = 39
+            elif self.label == "(38, 48)":
+                self.label = 45
 
     def walk(self, input_path):
         fold_pattern = "fold_{0}_data.txt"
@@ -41,32 +97,10 @@ class AdienceUtil(object):
                             self.label = parts[4]
                         else:
                             self.label = parts[3]
-
-                            try:
-                                age = int(self.label)
-                                if age in range(0, 3):
-                                    self.label = "(0, 2)"
-                                elif age in range(4, 7):
-                                    self.label = "(4, 6)"
-                                elif age in range(8, 13):
-                                    self.label = "(8, 12)"
-                                elif age in range(15, 21):
-                                    self.label = "(15, 20)"
-                                elif age in range(25, 33):
-                                    self.label = "(25, 32)"
-                                elif age in range(38, 44):
-                                    self.label = "(38, 43)"
-                                elif age in range(48, 54):
-                                    self.label = "(48, 53)"
-                                elif age >= 60:
-                                    self.label = "(60, 100)"
-                            except ValueError:
-                                if self.label == "(27, 32)":
-                                    self.label = "(25, 32)"
-                                elif self.label == "(38, 42)":
-                                    self.label = "(38, 43)"
-                                elif self.label == "(38, 48)":
-                                    self.label = "(38, 43)"
+                            if self.regression:
+                                self._label_to_age_int()
+                            else:
+                                self._label_to_age_string()
 
                         yield self.parent, None, [self.image_path]
             except IOError as e:
@@ -112,10 +146,10 @@ def load_compcar_with_crop(image_path):
 
     # Read label.
     label_path = get_label_path_of_compcar(image_path)
-    with open(label_path[:-3] + "txt", 'r') as label_file:
-        label_file.readline()
-        label_file.readline()
-        line = label_file.readline()
+    with open(label_path[:-3] + "txt", 'r') as file_label:
+        file_label.readline()
+        file_label.readline()
+        line = file_label.readline()
 
         x1, y1, x2, y2 = map(int, line.strip().split(" "))
     # Crop image.
@@ -152,13 +186,13 @@ def load_car_json_data(car_json_path):
         j = json.load(json_data)
 
         # Name of this image.
-        name = j["brand"].split("#")[1]
+        car_name = j["brand"].split("#")[1]
 
         # Image bytes.
         image_bytes = base64.b64decode(j["image"])
         image = Image.open(io.BytesIO(image_bytes)).convert(mode="RGB")
 
-    return image, name
+    return image, car_name
 
 def load_car_color_json_data(car_json_path):
     """

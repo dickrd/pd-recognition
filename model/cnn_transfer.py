@@ -22,7 +22,7 @@ def build_transfer_vgg(input_tensor, num_class, image_size=224, image_channel=3,
         if past_last:
             opt_layers.append(layer)
 
-        if name is last_name:
+        if name == last_name:
             past_last = True
 
     layer_latest_conv = network['relu7']
