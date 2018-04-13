@@ -82,26 +82,26 @@ def train_transfer(model_path, train_data_path, class_count,
               "\treport     rate:\t{1}\n" \
               "\tlearning   rate:\t{2}".format(model_path, report_rate, learning_rate)
 
-    global_step_op = tf.Variable(0, trainable=False, name="global_step")
-    var_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "vgg_output")
-    var_to_train += opt_layers
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
-                                                                             global_step=global_step_op,
-                                                                             var_list=var_to_train,
-                                                                             colocate_gradients_with_ops=True)
-    print "Optimizing variables: {0}".format(var_to_train)
+        global_step_op = tf.Variable(0, trainable=False, name="global_step")
+        var_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "vgg_output")
+        var_to_train += opt_layers
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,
+                                                                                 global_step=global_step_op,
+                                                                                 var_list=var_to_train,
+                                                                                 colocate_gradients_with_ops=True)
+        print "Optimizing variables: {0}".format(var_to_train)
 
-    # The MonitoredTrainingSession takes care of session initialization,
-    # restoring from a checkpoint, saving to a checkpoint, and closing when done
-    # or an error occurs.
-    hooks = [EndSavingHook(save_path=model_path, global_step=global_step_op)]
-    with tf.train.MonitoredTrainingSession(checkpoint_dir=model_path,
-                                           hooks=hooks) as mon_sess:
-        global_step = -1
-        try:
-            while not mon_sess.should_stop():
-                _, global_step, current_cost = mon_sess.run([optimizer, global_step_op, cost])
-                if global_step % report_rate == 0:
-                    print "{0} steps passed with current cost: {1}.".format(global_step, current_cost)
-        except tf.errors.OutOfRangeError:
-            print "All images used in {0} steps.".format(global_step)
+        # The MonitoredTrainingSession takes care of session initialization,
+        # restoring from a checkpoint, saving to a checkpoint, and closing when done
+        # or an error occurs.
+        hooks = [EndSavingHook(save_path=model_path, global_step=global_step_op)]
+        with tf.train.MonitoredTrainingSession(checkpoint_dir=model_path,
+                                               hooks=hooks) as mon_sess:
+            global_step = -1
+            try:
+                while not mon_sess.should_stop():
+                    _, global_step, current_cost = mon_sess.run([optimizer, global_step_op, cost])
+                    if global_step % report_rate == 0:
+                        print "{0} steps passed with current cost: {1}.".format(global_step, current_cost)
+            except tf.errors.OutOfRangeError:
+                print "All images used in {0} steps.".format(global_step)
