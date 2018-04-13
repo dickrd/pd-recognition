@@ -14,13 +14,13 @@ def build_transfer_vgg(input_tensor, num_class, image_size=224, image_channel=3,
     assert image_size == 224
     assert image_channel == 3
 
-    network, average_image, class_names = vgg_face(original_model, input_tensor)
+    network, weights = vgg_face(original_model, input_tensor)
 
-    opt_layers = []
+    trainable = []
     past_last = False
-    for name in network:
+    for name in weights:
         if past_last:
-            opt_layers += network[name]
+            trainable += weights[name]
 
         if name == last_name:
             past_last = True
@@ -46,7 +46,7 @@ def build_transfer_vgg(input_tensor, num_class, image_size=224, image_channel=3,
     if compatible:
         return y, y_pred_cls
     else:
-        return y, y_pred_cls, opt_layers
+        return y, y_pred_cls, trainable
 
 
 def train_transfer(model_path, train_data_path, class_count,

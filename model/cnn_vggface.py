@@ -18,7 +18,7 @@ def build_custom_vgg(input_tensor, num_class, image_size, image_channel=3,
     assert image_size == 224
     assert image_channel == 3
 
-    network, average_image, class_names = vgg_face(original_model, input_tensor)
+    network, average_image = vgg_face(original_model, input_tensor)
 
     layer_latest_conv = network['pool5']
 
@@ -102,4 +102,4 @@ def vgg_face(param_path, input_maps):
         network[name] = current
 
     print "Vgg model loaded."
-    return weights, average_image, class_names
+    return network, weights
