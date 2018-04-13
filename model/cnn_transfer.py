@@ -20,7 +20,7 @@ def build_transfer_vgg(input_tensor, num_class, image_size=224, image_channel=3,
     past_last = False
     for name in network:
         if past_last:
-            opt_layers.append(network[name])
+            opt_layers += network[name]
 
         if name == last_name:
             past_last = True
@@ -32,9 +32,9 @@ def build_transfer_vgg(input_tensor, num_class, image_size=224, image_channel=3,
         layer_flat = tf.reshape(layer_latest_conv, [-1, num_features])
 
         layer_fc = new_fc_layer(layer_last=layer_flat,
-                                 num_inputs=num_features,
-                                 num_outputs=num_class,
-                                 use_relu=False)
+                                num_inputs=num_features,
+                                num_outputs=num_class,
+                                use_relu=False)
 
         # Output layer.
         y = layer_fc
@@ -48,9 +48,10 @@ def build_transfer_vgg(input_tensor, num_class, image_size=224, image_channel=3,
     else:
         return y, y_pred_cls, opt_layers
 
+
 def train_transfer(model_path, train_data_path, class_count,
                    regression=False, last_name="pool5",
-                   image_size = 224, report_rate=100,
+                   image_size=224, report_rate=100,
                    learning_rate=1e-4,
                    num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800):
     from data.common import TfReader
@@ -60,7 +61,6 @@ def train_transfer(model_path, train_data_path, class_count,
                               size=(image_size, image_size),
                               num_epochs=num_epoch)
         images, classes = train_data.read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
-
 
         y, y_pred_cls, opt_layers = build_transfer_vgg(input_tensor=images, num_class=class_count,
                                                        compatible=False, last_name=last_name)

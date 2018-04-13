@@ -65,6 +65,7 @@ def vgg_face(param_path, input_maps):
     layers = data['layers']
     current = input_maps - average_image
     network = {}
+    weights = {}
     for layer in layers[0]:
         name = layer[0]['name'][0][0]
         layer_type = layer[0]['type'][0][0]
@@ -75,24 +76,30 @@ def vgg_face(param_path, input_maps):
                 padding = 'SAME'
             stride = layer[0]['stride'][0][0]
             kernel, bias = layer[0]['weights'][0][0]
-            # kernel = np.transpose(kernel, (1, 0, 2, 3))
-            bias = np.squeeze(bias).reshape(-1)
-            conv = tf.nn.conv2d(current, tf.constant(kernel),
+            weight = tf.Variable(kernel)
+            bias = tf.Variable(np.squeeze(bias).reshape(-1))
+            conv = tf.nn.conv2d(current, weight,
                                 strides=(1, stride[0], stride[0], 1), padding=padding)
-            network[name] = conv
             current = tf.nn.bias_add(conv, bias)
+
+            weights[name] = [weight, bias]
         elif layer_type == 'relu':
             current = tf.nn.relu(current)
-            network[name] = current
+
+            weights[name] = []
         elif layer_type == 'pool':
             stride = layer[0]['stride'][0][0]
             pool = layer[0]['pool'][0][0]
             current = tf.nn.max_pool(current, ksize=(1, pool[0], pool[1], 1),
                                      strides=(1, stride[0], stride[0], 1), padding='SAME')
-            network[name] = current
+
+            weights[name] = []
         elif layer_type == 'softmax':
             current = tf.nn.softmax(tf.reshape(current, [-1, len(class_names)]))
-            network[name] = current
+
+            weights[name] = []
+
+        network[name] = current
 
     print "Vgg model loaded."
-    return network, average_image, class_names
+    return weights, average_image, class_names
