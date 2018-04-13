@@ -18,9 +18,9 @@ def build_transfer_vgg(input_tensor, num_class, image_size=224, image_channel=3,
 
     opt_layers = []
     past_last = False
-    for name, layer in network:
+    for name in network:
         if past_last:
-            opt_layers.append(layer)
+            opt_layers.append(network[name])
 
         if name == last_name:
             past_last = True
