@@ -351,13 +351,13 @@ def _main():
         packed = True
         print "Read image in json car file with color as label."
     elif args.pre_process == "adience":
-        adience = AdienceUtil()
+        adience = AdienceUtil(regression=args.regression)
         load_image = load_image_data
         walk = adience.walk
         generate_name = adience.name
         print "Adience pre-process using age as label."
     elif args.pre_process == "adience-sex":
-        adience = AdienceUtil(sex=True)
+        adience = AdienceUtil(regression=args.regression, sex=True)
         load_image = load_image_data
         walk = adience.walk
         generate_name = adience.name
