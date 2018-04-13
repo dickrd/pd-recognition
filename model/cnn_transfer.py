@@ -63,7 +63,7 @@ def train_transfer(model_path, train_data_path, class_count,
 
 
         y, y_pred_cls, opt_layers = build_transfer_vgg(input_tensor=images, num_class=class_count,
-                                                       last_name=last_name)
+                                                       compatible=False, last_name=last_name)
 
         if regression:
             cost = tf.reduce_sum(tf.pow(tf.transpose(y) - classes, 2)) / (2 * batch_size)
