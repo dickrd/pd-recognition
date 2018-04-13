@@ -195,7 +195,7 @@ def _use_model():
     parser.add_argument("-n", "--name-label",
                         help="path to json file that contains a map of readable name to class label.")
     parser.add_argument("-t", "--model-type", default="general",
-                        help="which type of model to use (general, autoencoder, googlecar, vggface, resnet)")
+                        help="which type of model to use (general, autoencoder, googlecar, vggface, vggtransfer, resnet)")
     parser.add_argument("-m", "--model-path", default="./",
                         help="path to stored model")
     parser.add_argument("-s", "--resize", default=512, type=int,
@@ -224,6 +224,10 @@ def _use_model():
         from model.cnn_vggface import build_custom_vgg
         build = build_custom_vgg
         scope = "custom_vgg"
+    elif args.model_type == "vggtransfer":
+        from model.cnn_transfer import build_transfer_vgg
+        build = build_transfer_vgg
+        scope = "vgg_output"
     elif args.model_type == "resnet":
         from model.cnn_resnet import build_custom_resnet
         build = build_custom_resnet

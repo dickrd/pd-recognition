@@ -5,31 +5,27 @@ from model.common import new_fc_layer, EndSavingHook
 
 
 def build_transfer_vgg(input_tensor, num_class, image_size=224, image_channel=3,
-                       compatible=True, last_name="pool5", original_model="vgg-face.mat"):
+                       compatible=True, trainable_layers=None, original_model="vgg-face.mat"):
     """
     Build custom vgg classification layers using downloaded original model in .mat format
     here: http://www.vlfeat.org/matconvnet/pretrained/#face-recognition
     """
-    print "Training from layer: ", last_name
+    print "Training vgg layers: ", trainable_layers
     assert image_size == 224
     assert image_channel == 3
 
     network, weights = vgg_face(original_model, input_tensor)
 
     trainable = []
-    past_last = False
-    for name in weights:
-        if past_last:
+    if trainable_layers:
+        for name in trainable_layers:
             trainable += weights[name]
 
-        if name == last_name:
-            past_last = True
-
-    layer_latest_conv = network['relu7']
+    layer_latest = network['relu7']
 
     with tf.variable_scope("vgg_output"):
-        num_features = layer_latest_conv.get_shape()[1:].num_elements()
-        layer_flat = tf.reshape(layer_latest_conv, [-1, num_features])
+        num_features = layer_latest.get_shape()[1:].num_elements()
+        layer_flat = tf.reshape(layer_latest, [-1, num_features])
 
         layer_fc = new_fc_layer(layer_last=layer_flat,
                                 num_inputs=num_features,
@@ -50,7 +46,7 @@ def build_transfer_vgg(input_tensor, num_class, image_size=224, image_channel=3,
 
 
 def train_transfer(model_path, train_data_path, class_count,
-                   regression=False, last_name="pool5",
+                   regression=False, trainable_layers=None,
                    image_size=224, report_rate=100,
                    learning_rate=1e-4,
                    num_epoch=50, batch_size=10, capacity=3000, min_after_dequeue=800):
@@ -63,7 +59,7 @@ def train_transfer(model_path, train_data_path, class_count,
         images, classes = train_data.read(batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
 
         y, y_pred_cls, opt_layers = build_transfer_vgg(input_tensor=images, num_class=class_count,
-                                                       compatible=False, last_name=last_name)
+                                                       compatible=False, trainable_layers=trainable_layers)
 
         if regression:
             cost = tf.reduce_sum(tf.pow(tf.transpose(y) - classes, 2)) / (2 * batch_size)

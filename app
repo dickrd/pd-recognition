@@ -8,10 +8,13 @@ def _main():
     data_path = [""]
     regression = False
     name_label = ""
-    last_name = "pool5"
+    trainable_layers = ["fc6", "fc7"]
 
     save_path = "model/"
     #### End                         ####
+
+    import os
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
     if regression:
         class_count = 1
@@ -27,7 +30,7 @@ def _main():
             class_count = len(label_names)
 
     train_transfer(model_path=save_path, train_data_path=data_path, class_count=class_count,
-                   regression=regression, last_name=last_name)
+                   regression=regression, trainable_layers=trainable_layers)
 
 if __name__ == "__main__":
     _main()
