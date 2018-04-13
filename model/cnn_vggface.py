@@ -79,18 +79,20 @@ def vgg_face(param_path, input_maps):
             bias = np.squeeze(bias).reshape(-1)
             conv = tf.nn.conv2d(current, tf.constant(kernel),
                                 strides=(1, stride[0], stride[0], 1), padding=padding)
+            network[name] = conv
             current = tf.nn.bias_add(conv, bias)
         elif layer_type == 'relu':
             current = tf.nn.relu(current)
+            network[name] = current
         elif layer_type == 'pool':
             stride = layer[0]['stride'][0][0]
             pool = layer[0]['pool'][0][0]
             current = tf.nn.max_pool(current, ksize=(1, pool[0], pool[1], 1),
                                      strides=(1, stride[0], stride[0], 1), padding='SAME')
+            network[name] = current
         elif layer_type == 'softmax':
             current = tf.nn.softmax(tf.reshape(current, [-1, len(class_names)]))
-
-        network[name] = current
+            network[name] = current
 
     print "Vgg model loaded."
     return network, average_image, class_names
