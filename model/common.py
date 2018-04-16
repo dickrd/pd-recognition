@@ -26,6 +26,12 @@ class RegressionBias(object):
         self.bias = {}
 
     def update(self, predictions, truth):
+        try:
+            len(predictions)
+        except TypeError:
+            predictions = [predictions]
+            truth = [truth]
+
         if not (len(predictions) == len(truth)):
             print "Incompatible length: predictions({0}), truth({1})" \
                 .format(len(predictions), len(truth))
