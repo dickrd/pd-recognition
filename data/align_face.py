@@ -8,9 +8,12 @@ def pipeline(input_path, aligned_path):
         if len(files) < 1:
             continue
 
-        face_path = path.replace(input_path, os.path.join(aligned_path, "face"), 1)
-        output_path = path.replace(input_path, os.path.join(aligned_path, "aligned"), 1)
-        os.makedirs(face_path, exist_ok=True)
+        face_path = path.replace(input_path, os.path.join(aligned_path, "face/"), 1)
+        output_path = path.replace(input_path, os.path.join(aligned_path, "aligned/"), 1)
+        try:
+            os.makedirs(face_path)
+        except OSError:
+            pass
 
         cascade_face_aligner = CascadeFaceAligner()
         cascade_face_aligner.detect_faces(path, face_path)
