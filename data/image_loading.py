@@ -10,6 +10,7 @@ class AdienceUtil(object):
         self.parent = None
         self.image_path = None
         self.label = None
+
         self.sex= sex
         self.regression = regression
 
@@ -118,9 +119,32 @@ class ImdbWikiUtil(object):
         self.parent = None
         self.image_path = None
         self.label = None
+
         self.sex= sex
         self.regression = regression
         self.source_type = source_type
+
+
+    def _label_to_age_string(self):
+        age = int(self.label)
+        if age in range(0, 3):
+            self.label = "(0, 2)"
+        elif age in range(4, 7):
+            self.label = "(4, 6)"
+        elif age in range(8, 13):
+            self.label = "(8, 12)"
+        elif age in range(15, 21):
+            self.label = "(15, 20)"
+        elif age in range(25, 33):
+            self.label = "(25, 32)"
+        elif age in range(38, 44):
+            self.label = "(38, 43)"
+        elif age in range(48, 54):
+            self.label = "(48, 53)"
+        elif age >= 60:
+            self.label = "(60, 100)"
+        else:
+            self.label = None
 
 
     def walk(self, input_path):
@@ -132,18 +156,18 @@ class ImdbWikiUtil(object):
 
         self.parent = input_path
         for img_path, gender_value in zip(full_path, gender):
-            img_path = img_path[0]
             try:
+                self.image_path = img_path[0]
                 if self.sex:
                     self.label = int(gender_value)
                 else:
-                    self.label = int(img_path[-8:-4]) - int(re.search(r'(\d\d\d\d)-\d\d?-\d\d?', img_path).group(1))
+                    self.label = int(self.image_path[-8:-4]) - int(re.search(r'(\d\d\d\d)-\d\d?-\d\d?', self.image_path).group(1))
                     if not self.regression:
-                        self.label = str(self.label)
+                        self._label_to_age_string()
 
                 yield self.parent, None, [self.image_path]
             except IOError as e:
-                print "Reading {0} failed: {1}".format(img_path, repr(e))
+                print "Processing {0} failed: {1}".format(img_path, repr(e))
 
     # noinspection PyUnusedLocal
     def name(self, file_path, index=0):
