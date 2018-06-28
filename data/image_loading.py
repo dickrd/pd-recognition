@@ -112,25 +112,27 @@ class AdienceUtil(object):
         return self.label
 
 
-class ImdbUtil(object):
+class ImdbWikiUtil(object):
 
-    def __init__(self, sex=False, regression=False):
+    def __init__(self, sex=False, regression=False, source_type="imdb"):
         self.parent = None
         self.image_path = None
         self.label = None
         self.sex= sex
         self.regression = regression
+        self.source_type = source_type
 
 
     def walk(self, input_path):
         from scipy.io import loadmat
         import re
-        mat_file = loadmat(os.path.join(input_path, "imdb.mat"))
-        full_path = mat_file['imdb']['full_path'][0][0][0]
-        gender = mat_file['imdb']['gender'][0][0][0]
+        mat_file = loadmat(os.path.join(input_path, self.source_type + ".mat"))
+        full_path = mat_file[self.source_type]['full_path'][0][0][0]
+        gender = mat_file[self.source_type]['gender'][0][0][0]
 
         self.parent = input_path
         for img_path, gender_value in zip(full_path, gender):
+            img_path = img_path[0]
             try:
                 if self.sex:
                     self.label = int(gender_value)
