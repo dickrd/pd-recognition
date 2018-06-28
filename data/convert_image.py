@@ -3,7 +3,7 @@ import json
 import os
 
 from data.image_loading import load_compcar_with_crop, load_image_data, load_car_json_data, get_label_path_of_compcar, \
-    AdienceUtil, normalize_image
+    AdienceUtil, normalize_image, ImdbUtil
 from data.image_loading import load_car_color_json_data
 from data.name_generation import generate_name_from_path
 
@@ -259,7 +259,7 @@ def _main():
     parser.add_argument("-d", "--dry-run", action="store_true",
                         help="generate json statistics only")
     parser.add_argument("-p", "--pre-process", default="general",
-                        help="which process to take (general, jsoncar, jsoncar-color, compcar, adience, adience-sex)")
+                        help="which process to take (general, jsoncar, jsoncar-color, compcar, adience, adience-sex, imdb, imdb-sex)")
     parser.add_argument("-l", "--label-index", type=int, default=-2,
                         help="which directory in path will be label")
     parser.add_argument("-n", "--name-label",
@@ -361,6 +361,18 @@ def _main():
         load_image = load_image_data
         walk = adience.walk
         generate_name = adience.name
+        print "Adience pre-process using sex as label."
+    elif args.pre_process == "imdb":
+        imdb = ImdbUtil(regression=args.regression)
+        load_image = load_image_data
+        walk = imdb.walk
+        generate_name = imdb.name
+        print "Adience pre-process using age as label."
+    elif args.pre_process == "imdb-sex":
+        imdb = ImdbUtil(regression=args.regression, sex=True)
+        load_image = load_image_data
+        walk = imdb.walk
+        generate_name = imdb.name
         print "Adience pre-process using sex as label."
     else:
         print "Unsupported process type: " + args.pre_process

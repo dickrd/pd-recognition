@@ -112,6 +112,43 @@ class AdienceUtil(object):
         return self.label
 
 
+class ImdbUtil(object):
+
+    def __init__(self, sex=False, regression=False):
+        self.parent = None
+        self.image_path = None
+        self.label = None
+        self.sex= sex
+        self.regression = regression
+
+
+    def walk(self, input_path):
+        from scipy.io import loadmat
+        import re
+        mat_file = loadmat(os.path.join(input_path, "imdb.mat"))
+        full_path = mat_file['imdb']['full_path'][0][0][0]
+        gender = mat_file['imdb']['gender'][0][0][0]
+
+        self.parent = input_path
+        for img_path, gender_value in zip(full_path, gender):
+            try:
+                if self.sex:
+                    self.label = int(gender_value)
+                else:
+                    self.label = int(img_path[-8:-4]) - int(re.search(r'(\d\d\d\d)-\d\d?-\d\d?', img_path).group(1))
+                    if not self.regression:
+                        self.label = str(self.label)
+
+                yield self.parent, None, [self.image_path]
+            except IOError as e:
+                print "Reading {0} failed: {1}".format(img_path, repr(e))
+
+    # noinspection PyUnusedLocal
+    def name(self, file_path, index=0):
+        assert file_path == os.path.join(self.parent, self.image_path)
+        return self.label
+
+
 def normalize_image(image, resize=(512, 512), crop_percentage=1.0):
     """
     Resize and crop image object.
