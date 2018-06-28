@@ -159,7 +159,12 @@ class ImdbWikiUtil(object):
             try:
                 self.image_path = img_path[0]
                 if self.sex:
-                    self.label = int(gender_value)
+                    if gender_value == 1:
+                        self.label = 'male'
+                    elif gender_value == 0:
+                        self.label = 'female'
+                    else:
+                        self.label = None
                 else:
                     self.label = int(self.image_path[-8:-4]) - int(re.search(r'(\d\d\d\d)-\d\d?-\d\d?', self.image_path).group(1))
                     if not self.regression:
