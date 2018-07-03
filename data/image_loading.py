@@ -233,9 +233,9 @@ class IogUtil(object):
         image = Image.open(file_path).convert(mode="RGB")
 
         base_measure = self.position[2] - self.position[0]
-        left = self.position[4] - base_measure
-        top = self.position[5] + base_measure
-        return image.crop((left, top, base_measure * 2, base_measure * 2))
+        left = self.position[4] - base_measure * 1.8
+        top = self.position[5] - base_measure * 1.8
+        return image.crop((left, top, left + base_measure * 3.6, top + base_measure * 3.6))
 
 
 def normalize_image(image, resize=(512, 512), crop_percentage=1.0):
