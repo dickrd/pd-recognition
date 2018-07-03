@@ -3,7 +3,7 @@ import json
 import os
 
 from data.image_loading import load_compcar_with_crop, load_image_data, load_car_json_data, get_label_path_of_compcar, \
-    AdienceUtil, normalize_image, ImdbWikiUtil
+    AdienceUtil, normalize_image, ImdbWikiUtil, IogUtil
 from data.image_loading import load_car_color_json_data
 from data.name_generation import generate_name_from_path
 
@@ -259,7 +259,7 @@ def _main():
     parser.add_argument("-d", "--dry-run", action="store_true",
                         help="generate json statistics only")
     parser.add_argument("-p", "--pre-process", default="general",
-                        help="which process to take (general, jsoncar, jsoncar-color, compcar, adience, adience-sex, imdb, imdb-sex, wiki, wiki-sex)")
+                        help="which process to take (general, jsoncar, jsoncar-color, compcar, adience, adience-sex, imdb, imdb-sex, wiki, wiki-sex, iog, iog-sex)")
     parser.add_argument("-l", "--label-index", type=int, default=-2,
                         help="which directory in path will be label")
     parser.add_argument("-n", "--name-label",
@@ -386,6 +386,18 @@ def _main():
         walk = wiki.walk
         generate_name = wiki.name
         print "Wiki pre-process using sex as label."
+    elif args.pre_process == "iog":
+        iog = IogUtil(regression=args.regression)
+        load_image = iog.load_img
+        walk = iog.walk
+        generate_name = iog.name
+        print "ImageOfGroups pre-process using age as label."
+    elif args.pre_process == "iog-sex":
+        iog = IogUtil(regression=args.regression, sex=True)
+        load_image = iog.load_img
+        walk = iog.walk
+        generate_name = iog.name
+        print "ImageOfGroups pre-process using sex as label."
     else:
         print "Unsupported process type: " + args.pre_process
         return

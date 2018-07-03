@@ -180,6 +180,64 @@ class ImdbWikiUtil(object):
         return self.label
 
 
+class IogUtil(object):
+
+    def __init__(self, sex=False, regression=False):
+        self.parent = None
+        self.image_path = None
+        self.label = None
+        self.position = None
+
+        self.sex= sex
+        self.regression = regression
+
+
+    def walk(self, input_path):
+        from scipy.io import loadmat
+        import ntpath
+        mat_file = loadmat(os.path.join(input_path, "eventrain.mat"))
+        full_path = mat_file['trcoll']['name'][0][0][0]
+        gender_col = mat_file['trcoll']['genClass'][0][0]
+        age_col = mat_file['trcoll']['ageClass'][0][0]
+        position_col = mat_file['trcoll']['facePosSize'][0][0]
+
+        self.parent = input_path
+        for img_path, gender, age, position in zip(full_path, gender_col, age_col, position_col):
+            try:
+                self.image_path = ntpath.basename(img_path[0])
+                self.position = position
+                if self.sex:
+                    if gender[0] == 2:
+                        self.label = 'male'
+                    elif gender[0] == 1:
+                        self.label = 'female'
+                    else:
+                        self.label = None
+                else:
+                    if self.regression:
+                        self.label = int(age[0])
+                    else:
+                        self.label = age[0]
+
+                yield self.parent, None, [self.image_path]
+            except IOError as e:
+                print "Processing {0} failed: {1}".format(img_path, repr(e))
+
+    # noinspection PyUnusedLocal
+    def name(self, file_path, index=0):
+        assert file_path == os.path.join(self.parent, self.image_path)
+        return self.label
+
+    def load_img(self, file_path):
+        assert file_path == os.path.join(self.parent, self.image_path)
+        image = Image.open(file_path).convert(mode="RGB")
+
+        base_measure = self.position[2] - self.position[0]
+        left = self.position[4] - base_measure
+        top = self.position[5] + base_measure
+        return image.crop((left, top, base_measure * 2, base_measure * 2))
+
+
 def normalize_image(image, resize=(512, 512), crop_percentage=1.0):
     """
     Resize and crop image object.
