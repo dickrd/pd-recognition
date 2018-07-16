@@ -217,7 +217,7 @@ class IogUtil(object):
                     if self.regression:
                         self.label = int(age[0])
                     else:
-                        self.label = age[0]
+                        self.label = str(age[0])
 
                 yield self.parent, None, [self.image_path]
             except IOError as e:

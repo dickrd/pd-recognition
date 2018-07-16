@@ -23,7 +23,7 @@ def pipeline(input_path, aligned_path):
                                          fidu_max_size=200 * 200,
                                          fidu_min_size=50 * 50,
                                          is_align=True,
-                                         is_draw_fidu=True,
+                                         is_draw_fidu=False,
                                          delete_no_fidu=True)
 
 
