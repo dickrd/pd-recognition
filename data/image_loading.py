@@ -195,13 +195,13 @@ class IogUtil(object):
     def walk(self, input_path):
         from scipy.io import loadmat
         import ntpath
-        mat_file = loadmat(os.path.join(input_path, "eventrain.mat"))
+        mat_file = loadmat(os.path.join(input_path, "even.mat"))
         full_path = mat_file['trcoll']['name'][0][0][0]
         gender_col = mat_file['trcoll']['genClass'][0][0]
         age_col = mat_file['trcoll']['ageClass'][0][0]
         position_col = mat_file['trcoll']['facePosSize'][0][0]
 
-        self.parent = input_path
+        self.parent = os.path.join(input_path, "jpg")
         for img_path, gender, age, position in zip(full_path, gender_col, age_col, position_col):
             try:
                 self.image_path = ntpath.basename(img_path[0])
