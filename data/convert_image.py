@@ -232,9 +232,9 @@ def print_dataset_summary(name_wrote_count=None, store_path=None, read_mode=Fals
     mid_kv = sorted_kv[len(sorted_kv)/2]
     small_kv = sorted_kv[0]
     big_kv = sorted_kv[-1]
-    print "Largest: {0}, {1}".format(big_kv[0].encode("utf-8"), big_kv[1])
-    print "Smallest: {0}, {1}".format(small_kv[0].encode("utf-8"), small_kv[1])
-    print "Middle: {0}, {1}".format(mid_kv[0].encode("utf-8"), mid_kv[1])
+    print "Largest: {0}, {1}".format(str(big_kv[0]).encode("utf-8"), big_kv[1])
+    print "Smallest: {0}, {1}".format(str(small_kv[0]).encode("utf-8"), small_kv[1])
+    print "Middle: {0}, {1}".format(str(mid_kv[0]).encode("utf-8"), mid_kv[1])
 
 
 def _main():
