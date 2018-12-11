@@ -182,7 +182,7 @@ class ImdbWikiUtil(object):
 
 class IogUtil(object):
 
-    def __init__(self, sex=False, regression=False):
+    def __init__(self, sex=False, regression=False, is_test=False):
         self.parent = None
         self.image_path = None
         self.label = None
@@ -190,16 +190,24 @@ class IogUtil(object):
 
         self.sex= sex
         self.regression = regression
+        self.is_test = is_test
 
 
     def walk(self, input_path):
         from scipy.io import loadmat
         import ntpath
-        mat_file = loadmat(os.path.join(input_path, "even.mat"))
-        full_path = mat_file['trcoll']['name'][0][0][0]
-        gender_col = mat_file['trcoll']['genClass'][0][0]
-        age_col = mat_file['trcoll']['ageClass'][0][0]
-        position_col = mat_file['trcoll']['facePosSize'][0][0]
+        if self.is_test:
+            mat_file = loadmat(os.path.join(input_path, "eventest.mat"))
+            full_path = mat_file['tecoll']['name'][0][0][0]
+            gender_col = mat_file['tecoll']['genClass'][0][0]
+            age_col = mat_file['tecoll']['ageClass'][0][0]
+            position_col = mat_file['tecoll']['facePosSize'][0][0]
+        else:
+            mat_file = loadmat(os.path.join(input_path, "eventrain.mat"))
+            full_path = mat_file['trcoll']['name'][0][0][0]
+            gender_col = mat_file['trcoll']['genClass'][0][0]
+            age_col = mat_file['trcoll']['ageClass'][0][0]
+            position_col = mat_file['trcoll']['facePosSize'][0][0]
 
         self.parent = os.path.join(input_path, "jpg")
         for img_path, gender, age, position in zip(full_path, gender_col, age_col, position_col):
