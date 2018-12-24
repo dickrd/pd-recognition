@@ -5,7 +5,7 @@ import os
 from data.image_loading import load_compcar_with_crop, load_image_data, load_car_json_data, get_label_path_of_compcar, \
     AdienceUtil, normalize_image, ImdbWikiUtil, IogUtil
 from data.image_loading import load_car_color_json_data
-from data.name_generation import generate_name_from_path, generate_name_by_file_name
+from data.name_generation import generate_name_from_path, generate_name_by_iog_pattern, generate_name_from_tail
 
 
 def extract_image(input_path, resize, limit, output_path,
@@ -259,7 +259,7 @@ def _main():
     parser.add_argument("-d", "--dry-run", action="store_true",
                         help="generate json statistics only")
     parser.add_argument("-p", "--pre-process", default="general",
-                        help="which process to take (general, jsoncar, jsoncar-color, compcar, adience, adience-sex, imdb, imdb-sex, wiki, wiki-sex, iog, iog-sex, iog-test, iog-sex-test, fgnet)")
+                        help="which process to take (general, jsoncar, jsoncar-color, compcar, adience, adience-sex, imdb, imdb-sex, wiki, wiki-sex, iog, iog-sex, iog-test, iog-sex-test, fgnet, hw)")
     parser.add_argument("-l", "--label-index", type=int, default=-2,
                         help="which directory in path will be label")
     parser.add_argument("-n", "--name-label",
@@ -412,8 +412,12 @@ def _main():
         print "ImageOfGroups pre-process using sex as label (test data)."
     elif args.pre_process == "fgnet":
         load_image = load_image_data
-        generate_name = generate_name_by_file_name
+        generate_name = generate_name_by_iog_pattern
         print "FG-NET pre-process using age as label."
+    elif args.pre_process == "hw":
+        load_image = load_image_data
+        generate_name = generate_name_from_tail
+        print "Ethnicity data pre-process."
     else:
         print "Unsupported process type: " + args.pre_process
         return

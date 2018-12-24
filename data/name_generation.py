@@ -22,7 +22,7 @@ def generate_name_from_path(file_path, index=0):
     except IndexError:
         return None
 
-def generate_name_by_file_name(file_path, index=0):
+def generate_name_by_iog_pattern(file_path, index=0):
     import re
 
     pattern = r"A(\d\d)"
@@ -33,3 +33,7 @@ def generate_name_by_file_name(file_path, index=0):
         return result.group(1)
     else:
         return None
+
+def generate_name_from_tail(file_path, index=0):
+    head, tail = os.path.split(file_path)
+    return tail[index]
